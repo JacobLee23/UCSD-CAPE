@@ -5,30 +5,34 @@
 
   "action": {
     "default_icon": {
-      "16": "src/images/icon-16.png",
-      "24": "src/images/icon-24.png",
-      "32": "src/images/icon-32.png"
+      "16": "src/icons/icon-16.png",
+      "24": "src/icons/icon-24.png",
+      "32": "src/icons/icon-32.png"
     },
     "default_title": "UCSD CAPE Scraper",
     "default_popup": "src/popup/popup.html"
   },
   "description": "UCSD Course and Professor Evaluations (CAPE) web scraper",
   "icons": {
-    "16": "src/images/icon-16.png",
-    "32": "src/images/icon-32.png",
-    "48": "src/images/icon-48.png",
-    "128": "src/images/icon-128.png"
+    "16": "src/icons/icon-16.png",
+    "32": "src/icons/icon-32.png",
+    "48": "src/icons/icon-48.png",
+    "128": "src/icons/icon-128.png"
   },
 
   "author": "Jacob.J.Lee@outlook.com",
   "content_scripts": [
     {
-      "js": ["src/scripts/content.js"],
+      "js": ["src/scripts/content-script.js"],
       "matches": [
-        "https://cape.ucsd.edu/*",
         "https://cape.ucsd.edu/response/Result.aspx",
         "https://cape.ucsd.edu/resopnses/CAPEReport.aspx"
       ]
     }
-  ]
+  ],
+  "homepage_url": "https://github.com/JacobLee23/UCSD-CAPE",
+  "host_permissions": ["https://cape.ucsd.edu/*"],
+  "optional_permissions": ["downloads"],
+  "permissions": ["activeTab"],
+  "short_name": "UCSD CAPE"
 }
