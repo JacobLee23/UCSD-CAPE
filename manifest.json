@@ -1,9 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "UCSD CAPE Extension",
+  "name": "UCSD CAPE Scraper",
   "version": "0.0.0",
 
   "action": {
+    "default_icon": {
+      "16": "src/images/icon-16.png",
+      "24": "src/images/icon-24.png",
+      "32": "src/images/icon-32.png"
+    },
+    "default_title": "UCSD CAPE Scraper",
     "default_popup": "src/popup/popup.html"
   },
   "description": "UCSD Course and Professor Evaluations (CAPE) web scraper",
