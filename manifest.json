@@ -6,7 +6,6 @@
   "action": {
     "default_popup": "src/popup/popup.html"
   },
-  "default_locale": "en",
   "description": "UCSD Course and Professor Evaluations (CAPE) web scraper",
   "icons": {
     "16": "src/images/icon-16.png",
@@ -18,7 +17,7 @@
   "author": "Jacob.J.Lee@outlook.com",
   "content_scripts": [
     {
-      "js": ["scripts/content.js"],
+      "js": ["src/scripts/content.js"],
       "matches": [
         "https://cape.ucsd.edu/*",
         "https://cape.ucsd.edu/response/Result.aspx",
