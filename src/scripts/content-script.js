@@ -1,28 +1,26 @@
 class CAPEResults {
-    constructor() {
-        this.results = new Map();
+    headers = [
+        "instructor", "course", "subject", "courseNumber", "sectionNumber",
+        "reportURL", "term", "quarter", "year", "enrollment",
+        "evaluations", "recommendClass", "recommendInstructor", "studyHoursPerWeek", "averageExpectedGrade",
+        "expectedGPA", "averageReceivedGrade", "receivedGPA"
+    ]
 
-        this.table = document.querySelector(
+    constructor() {
+        this.results = [];
+
+        this.elementTable = document.querySelector(
             "div#ContentPlaceHolder1_UpdatePanel1 > div > table.styled"
         );
 
-        this.results.set("headers", this.scrapeHeaders());
-        this.results.set("rows", this.results.scrapeRows());
-    }
+        this.results.push(this.scrapeHeaders());
+        this.results.push(...this.scrapeRows());
 
-    scrapeHeaders() {
-        const headers = [
-            "instructor", "course", "subject", "courseNumber", "sectionNumber",
-            "reportURL", "term", "quarter", "year", "enrollment",
-            "evaluations", "recommendClass", "recommendInstructor", "studyHoursPerWeek", "averageExpectedGrade",
-            "expectedGPA", "averageReceivedGrade", "receivedGPA"
-        ]
-
-        return headers;
+        this.resultsJSON = JSON.stringify(this.results);
     }
 
     scrapeRows() {
-        const elementRows = [...this.table.querySelectorAll("tbody > tr")].map(
+        const elementRows = [...this.elementTable.querySelectorAll("tbody > tr")].map(
             (element) => { return [...element.querySelectorAll("td")]; }
         );
 
@@ -33,7 +31,7 @@ class CAPEResults {
             /^([ABCDF][+\-]?)\s\((\d+\.\d+)\)$/,
         ];
 
-        const rows = [
+        const res = [
             elementRows.map((elements) => { return elements[0].innerText.trim() }),
             elementRows.map((elements) => { return elements[1].innerText.trim() }),
             elementRows.map((elements) => { return re[0].exec(elements[1].innerText.trim())[1] }),
@@ -57,6 +55,76 @@ class CAPEResults {
             elementRows.map((elements) => { return parseFloat(re[3].exec(elements[9].innerText.trim())[2]) }),
         ];
 
-        return rows;
+        return res;
+    }
+}
+
+
+class CAPEReport {
+    constructor() {
+        this.report = new Map();
+
+        this.report.set("reportTitle", document.getElementById("ContentPlaceHolder1_lblReportTitle").innerText);
+        this.report.set("courseDescription", document.getElementById("ContentPlaceHolder1_lblCourseDescription").innerText);
+        this.report.set("instructorName", document.getElementById("ContentPlaceHolder1_lblInstructorName").innerText);
+        this.report.set("quarter", document.getElementById("ContentPlaceHolder1_lblTermCode").innerText);
+        this.report.set("enrollment", parseInt(document.getElementById("ContentPlaceHolder1_lblEnrollment").innerText));
+        this.report.set("evaluationsSubmitted", parseInt(document.getElementById("ContentPlaceHolder1_lblEvaluationsSubmitted").innerText));
+
+        this.report.set("statistics", this.scrapeStatistics());
+        this.report.set("grades", this.scrapeGrades());
+        this.report.set("additionalComments", this.scrapeAdditionalComments());
+
+        this.reportJSON = JSON.stringify(this.report);
+    }
+
+    scrapeStatistics() {
+        const res = new Map();
+
+        const elementTable = document.getElementById("ContentPlaceHolder1_tblStatistics");
+        const elementTData = elementTable.querySelectorAll("tbody > tr:first-child > td > span");
+
+        let re;
+        let data;
+
+        // "Recommend the instructor"
+        re = /(\d{2})\s(\d{2}%)/;
+        data = new Map(
+            [
+                ["n", parseInt(re.exec(elementTData[0].innerText)[1])],
+                ["pct", re.exec(elementTData[0].innerText)[2]]
+            ]
+        )
+        res.set("recommendInstructor", data);
+
+        // "Recommend the course"
+        re = /(\d{2})\s(\d{2}%)/;
+        data = new Map(
+            [
+                ["n", parseInt(re[0].exec(elementTData[1].innerText)[1])],
+                ["pct", re[0].exec(elementTData[1].innerText)[2]]
+            ]
+        )
+        res.set("recommendCourse", data);
+
+        // "Exams represent the course material"
+        re = /(\d+\.\d+)\s\((.*)\)/;
+        data = new Map(
+            [
+                ["n", parseFloat(re[1].exec(elementTData[2].innerText)[1])],
+                ["response", re[1].exec(elementTData[2].innerText)[2]]
+            ]
+        )
+        res.set("examsRepresentCourseMaterial", data);
+
+        // "Instructor is clear and audible"
+        re = /(\d+\.\d+)\s\((.*)\)/;
+        data = [
+            ["n", parseFloat(re[1].exec(elementTData[3].innerText)[1])],
+            ["response", re[1].exec(elementTData[3].innerText)[2]]
+        ]
+        res.set("instructorClearAndAudible", data);
+
+        return res;
     }
 }
