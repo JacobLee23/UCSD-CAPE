@@ -127,4 +127,63 @@ class CAPEReport {
 
         return res;
     }
+
+    scrapeGrades() {
+        const grades = new Map(
+            [
+                ["expected", "ContentPlaceHolder1_pnlExpectedGrades"],
+                ["received", "ContentPlaceHolder1_pnlGradesReceived"]
+            ]
+        );
+        const res = new Map();
+
+        const re = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
+
+        [...grades.keys()].forEach(
+            (grade) => {
+                const data = new Map();
+                const gradeElement = document.getElementById(grades.get(grade));
+
+                const element = gradeElement.querySelector("h4 > span");
+                data.set("averageGrade", re.exec(element.innerText)[1]);
+                data.set("GPA", parseFloat(re.exec(element.innerText)[2]));
+
+                const elementTable = gradeElement.querySelector("table.styled");
+                const elementTHeader = [...elementTable.querySelectorAll("thead > tr:first-child > th")];
+                const elementTData = [...elementTable.querySelectorAll("tbody > tr")].map(
+                    (element) => { return [...element.querySelectorAll("td")]; }
+                )
+                const theaders = elementTHeader.map(
+                    (element) => { return element.innerText; }
+                );
+                const tdata = elementTData.map(
+                    (a) => {
+                        return a.map(
+                            (element) => { return element.innerText.split(" ").join(""); }
+                        );
+                    }
+                )
+
+                gradeData = new Map()
+                theaders.forEach(
+                    (header) => {
+                        gradeData.set(
+                            header,
+                            new Map(
+                                [
+                                    ["n", parseInt(tdata[0][theaders.indexOf(header)])],
+                                    ["pct", tdata[1][theaders.indexOf(header)]]
+                                ]
+                            )
+                        )
+                    }
+                )
+                data.set("grades", gradeData);
+
+                res.set(grade, data);
+            }
+        )
+
+        return res;
+    }
 }
