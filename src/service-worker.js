@@ -1,5 +1,5 @@
 chrome.action.onClicked.addListener(
-    (tab) => {
+    async (tab) => {
         if (!(tab.url && tab.url.includes("cape.ucsd.edu/responses/"))) { return; }
 
         const queryParameters = new URLSearchParams(tab.url.split("?")[1]);
@@ -9,12 +9,8 @@ chrome.action.onClicked.addListener(
         else if (tab.url.includes("CAPEReport.aspx")) { message.type = "report"; }
 
         console.log(message);
-    }
-)
 
-
-chrome.runtime.onMessage.addListener(
-    (message, sender, sendResponse) => {
-        console.log("Hello world!");
+        const response = await chrome.tabs.sendMessage(tab.id, message);
+        response.then((response) => { console.log(response); });
     }
-)
+);
