@@ -6,17 +6,17 @@ import { CAPEResults, CAPEReport } from "./scraper.js";
 
 
 chrome.runtime.onMessage.addListener(
-    (message: any, sender: chrome.runtime.MessageSender, sendResponse: Function): void => {
+    (message, sender, sendResponse) => {
         let payload;
         switch (message.type) {
             case "results":
                 payload = new CAPEResults(
-                    <string>message.queryParameters.get("Name"),
-                    <string>message.queryParameters.get("CourseNumber")
+                    message.queryParameters.get("Name"),
+                    message.queryParameters.get("CourseNumber")
                 );
             case "report":
                 payload = new CAPEReport(
-                    parseInt(<string>message.queryParameters.get("sectionid"))
+                    parseInt(message.queryParameters.get("sectionid"))
                 );
             default:
                 payload = null;

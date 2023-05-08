@@ -1,12 +1,14 @@
-console.log("Hello world!");
+/**
+ * 
+ */
 
 
 /**
  * 
- * @param tab 
+ * @param {*} tab 
  * @returns 
  */
-function scrapeCAPEPage(tab: chrome.tabs.Tab): void {
+function scrapeCAPEPage(tab) {
     if (!(tab.url && tab.url.includes("cape.ucsd.edu/responses/"))) { return; }
 
     const queryParameters = new URLSearchParams(tab.url.split("?")[1]);
@@ -26,9 +28,7 @@ function scrapeCAPEPage(tab: chrome.tabs.Tab): void {
         };
     } else { return; }
 
-    const response = chrome.tabs.sendMessage(
-        <number>tab.id, message, (response) => { console.log(response); }
-    );
+    chrome.tabs.sendMessage(tab.id, message, (response) => { console.log(response); });
 }
 
 

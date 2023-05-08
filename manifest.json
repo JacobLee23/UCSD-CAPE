@@ -29,14 +29,14 @@
         "src/scripts/content-script.js"
       ],
       "matches": [
-        "https://cape.ucsd.edu/response/Result.aspx",
-        "https://cape.ucsd.edu/resopnses/CAPEReport.aspx"
+        "*cape.ucsd.edu/responses/Results.aspx*",
+        "*cape.ucsd.edu/responses/CAPEReport.aspx*"
       ]
     }
   ],
   "homepage_url": "https://github.com/JacobLee23/UCSD-CAPE",
   "host_permissions": [
-    "https://cape.ucsd.edu/*"
+    "*cape.ucsd.edu/*"
   ],
   "permissions": [
     "activeTab"
