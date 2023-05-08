@@ -21,8 +21,9 @@ function scrapeCAPEPage(tab) {
     else if (tab.url.includes("CAPEReport.aspx")) { message.set("type", "report"); }
     else { return; }
 
-    const payload = Object.fromEntries(message);
-    chrome.tabs.sendMessage(tab.id, payload);
+    const data = Object.fromEntries(message);
+    const response = chrome.tabs.sendMessage(tab.id, data);
+    response.then((x) => { console.log(x); });
 }
 
 

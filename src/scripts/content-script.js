@@ -23,7 +23,6 @@ function scrapeCAPEPage(message, sender, sendResponse) {
             payload = null;
     }
 
-    console.log(payload);
     sendResponse(payload);
 }
 
