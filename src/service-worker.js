@@ -13,22 +13,17 @@ function scrapeCAPEPage(tab) {
 
     const queryParameters = new URLSearchParams(tab.url.split("?")[1]);
 
-    let message;
-    if (tab.url.includes("Results.aspx")) {
-        message = {
-            url: tab.url,
-            queryParameters: queryParameters,
-            type: "results"
-        };
-    } else if (tab.url.includes("CAPEReport.aspx")) {
-        message = {
-            url: tab.url,
-            queryParameters: queryParameters,
-            type: "report"
-        };
-    } else { return; }
+    let message = new Map();
+    message.set("queryParameters", Object.fromEntries(queryParameters.entries()));
+    message.set("url", tab.url);
 
-    chrome.tabs.sendMessage(tab.id, message);
+    if (tab.url.includes("Results.aspx")) { message.set("type", "results"); }
+    else if (tab.url.includes("CAPEReport.aspx")) { message.set("type", "report"); }
+    else { return; }
+
+    const payload = Object.fromEntries(message);
+    console.log(payload);
+    chrome.tabs.sendMessage(tab.id, payload);
 }
 
 

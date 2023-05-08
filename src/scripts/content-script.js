@@ -15,13 +15,11 @@ function scrapeCAPEPage(message, sender, sendResponse) {
     switch (message.type) {
         case "results":
             payload = new CAPEResults(
-                message.get("queryParameters").get("Name"),
-                message.get("queryParameters").get("CourseNumber")
+                message.queryParameters.Name,
+                message.queryParameters.CourseNumber
             );
         case "report":
-            payload = new CAPEReport(
-                parseInt(message.get("queryParameters").get("sectionid"))
-            );
+            payload = new CAPEReport(parseInt(message.queryParameters.sectionid));
         default:
             payload = null;
     }
