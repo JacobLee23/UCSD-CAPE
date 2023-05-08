@@ -14,16 +14,16 @@ function scrapeCAPEPage(message, sender, sendResponse) {
     let payload;
     switch (message.type) {
         case "results":
-            payload = new CAPEResults(
-                message.queryParameters.Name,
-                message.queryParameters.CourseNumber
-            );
+            payload = new CAPEResults(message.queryParameters.Name, message.queryParameters.CourseNumber);
+            break;
         case "report":
             payload = new CAPEReport(parseInt(message.queryParameters.sectionid));
+            break;
         default:
             payload = null;
     }
 
+    console.log(payload);
     sendResponse(payload);
 }
 
@@ -49,9 +49,7 @@ class CAPEResults {
 
         this.results = [];
 
-        this.elementTable = document.querySelector(
-            "div#ContentPlaceHolder1_UpdatePanel1 > div > table.styled"
-        );
+        this.elementTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
 
         this.results.push(this.headers);
         this.results.push(...this.scrapeRows());
@@ -81,8 +79,8 @@ class CAPEResults {
             row.push(elements[0].innerText?.trim());
             row.push(elements[1].innerText?.trim());
             row.push(reCourseNumber.exec(elements[1].innerText?.trim())?.at(2));
-            row.push(reReportURL.exec(href)?.at(1));
-            row.push(href);
+            row.push(parseInt(reReportURL.exec(href)?.at(1)));
+            row.push(`https://cape.ucsd.edu/${href}`);
             row.push(elements[2].innerText?.trim());
             row.push(reTerm.exec(elements[2].innerText?.trim())?.at(1));
             row.push(parseInt(reTerm.exec(elements[2].innerText?.trim())?.at(2)));
@@ -95,6 +93,8 @@ class CAPEResults {
             row.push(parseFloat(reGrade.exec(elements[8].innerText?.trim())?.at(2)));
             row.push(reGrade.exec(elements[9].innerText?.trim())?.at(1));
             row.push(parseFloat(reGrade.exec(elements[9].innerText?.trim())?.at(2)));
+
+            res.push(row);
         }
 
         return res;
@@ -158,39 +158,37 @@ class CAPEReport {
             elementTable.querySelectorAll("tbody > tr:first-child > td > span")
         );
 
-        const reGrade = /^([ABCDF][+\-]?)\s\((\d+\.\d+)\)$/;
+        const reGrade = /^(\d+)\s(\d+%)$/;
         const reResponse = /(\d+\.\d+)\s\((.*)\)/;
         let match;
 
-        const cellData = new Map();
-
         // "Recommend the instructor"
-        match = reGrade.exec(elementTData?.at(0)?.textContent?.trim());
-        cellData.set("n", parseInt(match?.at(1)));
-        cellData.set("pct", match?.at(1));
-        res.set("RecommendInstructor", cellData);
-        cellData.clear();
+        match = reGrade.exec(elementTData[0].innerText.trim());
+        res.set(
+            "RecommendInstructor",
+            new Map([["n", parseInt(match[1])], ["pct", match[2]]])
+        );
 
         // "Recommend the course"
-        match = reGrade.exec(elementTData?.at(1)?.textContent?.trim());
-        cellData.set("n", parseInt(match?.at(1)));
-        cellData.set("pct", match?.at(1));
-        res.set("RecommendCourse", cellData);
-        cellData.clear();
+        match = reGrade.exec(elementTData[1].innerText.trim());
+        res.set(
+            "RecommendCourse",
+            new Map([["n", parseInt(match[1])], ["pct", match[2]]])
+        );
 
         // "Exams represent the course material"
-        match = reResponse.exec(elementTData?.at(2)?.textContent?.trim());
-        cellData.set("rating", parseFloat(match?.at(1)));
-        cellData.set("response", match?.at(2));
-        res.set("ExamsRepresentCourseMaterial", cellData);
-        cellData.clear();
+        match = reResponse.exec(elementTData[2].innerText.trim());
+        res.set(
+            "ExamsRepresentCourseMaterial",
+            new Map([["rating", parseFloat(match[1])], ["response", match[2]]])
+        );
 
         // "Instructor is clear and audible"
         match = reResponse.exec(elementTData?.at(3)?.textContent?.trim());
-        cellData.set("rating", parseFloat(match?.at(1)));
-        cellData.set("response", match?.at(2));
-        res.set("InstructorClearAndAudible", cellData);
-        cellData.clear();
+        res.set(
+            "InstructorClearAndAudible",
+            new Map([["rating", parseFloat(match[1])], ["response", match[2]]])
+        );
 
         return res;
     }
@@ -200,18 +198,18 @@ class CAPEReport {
      * @returns 
      */
     scrapeGrades() {
-        const grades = {
-            expected: "ContentPlaceHolder1_pnlExpectedGrades",
-            received: "ContentPlaceHolder1_pnlGradesReceived"
-        };
+        const grades = new Map();
+        grades.set("expected", "ContentPlaceHolder1_pnlExpectedGrades");
+        grades.set("received", "ContentPlaceHolder1_pnlGradesReceived");
 
         const res = new Map();
 
         const reAverageGrade = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
 
-        const keys = Array.from(grades.keys()), values = Array.from(grades.values());
+        let key, value;
+        let entries = Array.from(grades.entries());
         for (let i = 0; i < grades.size; ++i) {
-            const key = keys[i], value = values[i];
+            [key, value] = entries[i];
 
             const data = new Map();
 
@@ -219,7 +217,7 @@ class CAPEReport {
             const elementHeader = elementGrade.querySelector("h4 > span");
             const elementTable = elementGrade.querySelector("table.styled");
             const elementTHeader = Array.from(elementTable.querySelectorAll("thead > tr:first-child > th"));
-            const elementTData = Array.from(elementHeader.querySelectorAll("tbody > tr")).map(
+            const elementTData = Array.from(elementTable.querySelectorAll("tbody > tr")).map(
                 (element) => Array.from(element.querySelectorAll("td"))
             );
 
@@ -234,10 +232,7 @@ class CAPEReport {
 
             const gradeData = new Map();
             for (let j = 0; j < theaders.length; ++j) {
-                const cellData = new Map();
-                cellData.set("n", parseInt(tdata[0][j]));
-                cellData.set("pct", tdata[1][j]);
-                gradeData.set(theaders[j], cellData);
+                gradeData.set(theaders[j], new Map([["n", parseInt(tdata[0][j])], ["pct", tdata[1][j]]]));
             }
             data.set("Grades", gradeData);
 
@@ -253,8 +248,8 @@ class CAPEReport {
      */
     scrapeQuestionnaire() {
         return [
-            ...Array.from(Array(3).keys()).map((x) => x + 1).map(this.scrapeIndividualQuestion),
-            ...Array.from(Array(3).keys()).map((x) => x + 5).map(this.scrapeIndividualQuestion),
+            ...Array.from(Array(3).keys()).map((x) => x + 1).map((x) => this.scrapeIndividualQuestion(x)),
+            ...Array.from(Array(3).keys()).map((x) => x + 5).map((x) => this.scrapeIndividualQuestion(x)),
             ...Array.from(Array(5).keys()).map((x) => x + 9).map((x) => this.scrapeQuestionGroup(9, x)),
             this.scrapeIndividualQuestion(14),
             ...Array.from(Array(10).keys()).map((x) => x + 16).map((x) => this.scrapeQuestionGroup(16, x)),
@@ -264,57 +259,17 @@ class CAPEReport {
 
     /**
      * 
-     * @param {*} elementOptions 
-     * @param {*} elementResponses 
-     * @returns 
-     */
-    scrapeQuestions(elementOptions, elementResponses) {
-        const res = new Map();
-
-        const reGrade = /^([ABCDF][+\-]?)\s\((\d+\.\d+)\)$/;
-
-        const textOptions = Array.from(elementOptions.getElementsByTagName("td")).map(
-            (element) => element.innerText
-        );
-        const textResponses = Array.from(elementResponses.getElementsByTagName("td")).slice(1).map(
-            (element) => element.innerText
-        );
-
-        const options = ["Prompt", ...textOptions.slice(1, -3).map((s) => s.trim()), "n", "mean", "std"];
-        const responses = [];
-
-        responses.push(textResponses[0]);
-        responses.push(
-            ...textResponses.slice(1, -3).map(
-                (s) => {
-                    const data = new Map();
-                    const match = reGrade.exec(s);
-                    data.set("n", parseInt(match?.at(1)));
-                    data.set("pct", match?.at(2));
-                    return data;
-                }
-            )
-        )
-        responses.push(parseInt(textResponses.at(-3)?.trim()));
-        responses.push(parseFloat((textOptions.at(-2))?.trim()));
-        responses.push(parseFloat((textOptions.at(-1))?.trim()));
-
-        options.forEach((x) => { res.set(x, responses[options.indexOf(x)]); });
-        return res;
-    }
-
-    /**
-     * 
      * @param {*} nChoiceText 
      * @returns 
      */
     scrapeIndividualQuestion(nChoiceText) {
-        const id = `ContentPlaceHolder1_dlQuestionnaire_trChoiceText_${nChoiceText}`;
+        const idChoiceText = `ContentPlaceHolder1_dlQuestionnaire_trChoiceText_${nChoiceText}`;
+        const idQuestionText = `ContentPlaceHolder1_dlQuestionnaire_tdQuestionText_${nChoiceText}`;
         
-        const elementOptions = document.getElementById(id);
-        const elementResponses = elementOptions.nextElementSibling;
+        const containerOptions = document.getElementById(idChoiceText);
+        const containerResponses = document.getElementById(idQuestionText);
         
-        return this.scrapeQuestion(elementOptions, elementResponses);
+        return this.scrapeQuestion(containerOptions, containerResponses);
     }
 
     /**
@@ -327,10 +282,50 @@ class CAPEReport {
         const idChoiceText = `ContentPlaceHolder1_dlQuestionnaire_trChoiceText_${nChoiceText}`;
         const idQuestionText = `ContentPlaceHolder1_dlQuestionnaire_tdQuestionText_${nQuestionText}`;
 
-        const elementOptions = document.getElementById(idChoiceText);
-        const elementResponses = document.getElementById(idQuestionText);
+        const containerOptions = document.getElementById(idChoiceText);
+        const containerResponses = document.getElementById(idQuestionText);
 
-        return this.scrapeQuestion(elementOptions, elementResponses);
+        return this.scrapeQuestion(containerOptions, containerResponses);
+    }
+
+    /**
+     * 
+     * @param {*} containerOptions 
+     * @param {*} containerResponses 
+     * @returns 
+     */
+    scrapeQuestion(containerOptions, containerResponses) {
+        const res = new Map();
+
+        const reGrade = /^(\d+)<br>(\d+%)<br>$/;
+
+        const elementOptions = Array.from(containerOptions.querySelectorAll("td")).slice(1);
+        const elementResponses = Array.from(containerResponses.parentElement.querySelectorAll("td span")).slice(1);
+        const textOptions = elementOptions.map((element) => element.innerText.trim());
+        const textResponses = elementResponses.map((element) => element.innerText.trim());
+
+        const options = ["Prompt", ...textOptions.slice(0, -3), "n", "mean", "std"];
+        const responses = [];
+
+        responses.push(textResponses[0]);
+        responses.push
+        responses.push(
+            ...Array.from(elementResponses).slice(1, -3).map(
+                (e) => {
+                    const data = new Map();
+                    const match = reGrade.exec(e.innerHTML);
+                    data.set("n", parseInt(match?.at(1)));
+                    data.set("pct", match?.at(2));
+                    return data;
+                }
+            )
+        )
+        responses.push(parseInt(textResponses.at(-3)));
+        responses.push(parseFloat((textOptions.at(-2))));
+        responses.push(parseFloat((textOptions.at(-1))));
+
+        options.forEach((x) => { res.set(x, responses[options.indexOf(x)]); });
+        return res;
     }
 }
 

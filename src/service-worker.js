@@ -22,7 +22,6 @@ function scrapeCAPEPage(tab) {
     else { return; }
 
     const payload = Object.fromEntries(message);
-    console.log(payload);
     chrome.tabs.sendMessage(tab.id, payload);
 }
 
