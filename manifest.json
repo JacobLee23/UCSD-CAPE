@@ -39,7 +39,8 @@
     "https://cape.ucsd.edu/*"
   ],
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "short_name": "UCSD CAPE"
 }
