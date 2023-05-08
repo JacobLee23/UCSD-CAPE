@@ -35,7 +35,7 @@ function scrapeCAPEPage(message, sender, sendResponse) {
 /**
  * 
  */
-export class CAPEResults {
+class CAPEResults {
     headers = [
         "Instructor", "Course", "CourseNumber", "SectionNumber", "ReportURL",
         "Term", "Quarter", "Year", "Enrollment", "Evaluations",
@@ -109,7 +109,7 @@ export class CAPEResults {
 /**
  * 
  */
-export class CAPEReport {
+class CAPEReport {
 
     /**
      * 
