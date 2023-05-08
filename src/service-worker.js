@@ -28,9 +28,7 @@ function scrapeCAPEPage(tab) {
         };
     } else { return; }
 
-    chrome.tabs.sendMessage(tab.id, message, (response) => { console.log(response); });
-
-    return true;
+    chrome.tabs.sendMessage(tab.id, message);
 }
 
 

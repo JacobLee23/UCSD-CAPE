@@ -15,20 +15,18 @@ function scrapeCAPEPage(message, sender, sendResponse) {
     switch (message.type) {
         case "results":
             payload = new CAPEResults(
-                message.queryParameters.get("Name"),
-                message.queryParameters.get("CourseNumber")
+                message.get("queryParameters").get("Name"),
+                message.get("queryParameters").get("CourseNumber")
             );
         case "report":
             payload = new CAPEReport(
-                parseInt(message.queryParameters.get("sectionid"))
+                parseInt(message.get("queryParameters").get("sectionid"))
             );
         default:
             payload = null;
     }
 
     sendResponse(payload);
-
-    return true;
 }
 
 
