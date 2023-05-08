@@ -41,8 +41,8 @@ export class CAPEResults {
      * @returns 
      */
     scrapeRows(): (string | number)[][] {
-        const elementRows: HTMLElement[][] = [...this.elementTable.querySelectorAll("tbody > tr")].map(
-            (element) => [...element.querySelectorAll("td")]
+        const elementRows: Element[][] = Array.from(this.elementTable.querySelectorAll("tbody > tr")).map(
+            (element: Element) => Array.from(element.querySelectorAll("td"))
         );
 
         let reCourseNumber: RegExp = /^(\w{3,4})\s(\d{1,3}\w{0,2})/;
@@ -52,28 +52,28 @@ export class CAPEResults {
 
         const res: (string | number)[][] = [];
         for (let i: number = 0; i < elementRows.length; ++i) {
-            const elements: HTMLElement[] = elementRows[i];
+            const elements: Element[] = elementRows[i];
             const row: (string | number)[] = [];
 
             const href = <string>elements[1].querySelector("a")?.getAttribute("href");
             
-            row.push(elements[0].innerText.trim());
-            row.push(elements[1].innerText.trim());
-            row.push(<string>reCourseNumber.exec(elements[1].innerText.trim())?.at(2));
+            row.push(<string>elements[0].textContent?.trim());
+            row.push(<string>elements[1].textContent?.trim());
+            row.push(<string>reCourseNumber.exec(<string>elements[1].textContent?.trim())?.at(2));
             row.push(<string>reReportURL.exec(href)?.at(1));
             row.push(href);
-            row.push(elements[2].innerText.trim());
-            row.push(<string>reTerm.exec(elements[2].innerText.trim())?.at(1));
-            row.push(parseInt(<string>reTerm.exec(elements[2].innerText.trim())?.at(2)));
-            row.push(parseInt(elements[3].innerText.trim()));
-            row.push(parseInt(elements[4].innerText.trim()));
-            row.push(elements[5].innerText.trim());
-            row.push(elements[6].innerText.trim());
-            row.push(parseFloat(elements[7].innerText.trim()));
-            row.push(<string>reGrade.exec(elements[8].innerText.trim())?.at(1));
-            row.push(parseFloat(<string>reGrade.exec(elements[8].innerText.trim())?.at(2)));
-            row.push(<string>reGrade.exec(elements[9].innerText.trim())?.at(1));
-            row.push(parseFloat(<string>reGrade.exec(elements[9].innerText.trim())?.at(2)));
+            row.push(<string>elements[2].textContent?.trim());
+            row.push(<string>reTerm.exec(<string>elements[2].textContent?.trim())?.at(1));
+            row.push(parseInt(<string>reTerm.exec(<string>elements[2].textContent?.trim())?.at(2)));
+            row.push(parseInt(<string>elements[3].textContent?.trim()));
+            row.push(parseInt(<string>elements[4].textContent?.trim()));
+            row.push(<string>elements[5]?.textContent?.trim());
+            row.push(<string>elements[6].textContent?.trim());
+            row.push(parseFloat(<string>elements[7].textContent?.trim()));
+            row.push(<string>reGrade.exec(<string>elements[8].textContent?.trim())?.at(1));
+            row.push(parseFloat(<string>reGrade.exec(<string>elements[8].textContent?.trim())?.at(2)));
+            row.push(<string>reGrade.exec(<string>elements[9].textContent?.trim())?.at(1));
+            row.push(parseFloat(<string>reGrade.exec(<string>elements[9].textContent?.trim())?.at(2)));
         }
 
         return res;
@@ -134,9 +134,9 @@ export class CAPEReport {
         const res: Map<string, any> = new Map();
 
         const elementTable = <HTMLElement>document.getElementById("ContentPlaceHolder1_tblStatistics");
-        const elementTData = [
-            ...elementTable.querySelectorAll("tbody > tr:first-child > td > span")
-        ];
+        const elementTData: Element[] = Array.from(
+            elementTable.querySelectorAll("tbody > tr:first-child > td > span")
+        )
 
         const reGrade: RegExp = /^([ABCDF][+\-]?)\s\((\d+\.\d+)\)$/;
         const reResponse: RegExp = /(\d+\.\d+)\s\((.*)\)/;
@@ -186,9 +186,9 @@ export class CAPEReport {
 
         const reAverageGrade: RegExp = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
 
-        let key: string, value: string
+        const keys: string[] = Array.from(grades.keys()), values: string[] = Array.from(grades.values());
         for (let i: number = 0; i < grades.size; ++i) {
-            key = [...grades.keys()][i], value = [...grades.values()][i];
+            const key: string = keys[i], value: string = values[i];
             
             const data: Map<string, any> = new Map();
             const elementGrade = <HTMLElement>document.getElementById(value)
@@ -200,12 +200,10 @@ export class CAPEReport {
             data.set("GPA", parseFloat(<string>match?.at(2)));
 
             const elementTable = <HTMLElement>elementGrade.querySelector("table.styled");
-            const elementTHeader = [
-                ...elementTable.querySelectorAll("thead > tr:first-child > th")
-            ];
-            const elementTData = [
-                ...elementHeader.querySelectorAll("tbody > tr")
-            ].map((element: Element): Element[] => [...element.querySelectorAll("td")]);
+            const elementTHeader: Element[] = Array.from(elementTable.querySelectorAll("thead > tr:first-child > th"));
+            const elementTData: Element[][] = Array.from(elementHeader.querySelectorAll("tbody > tr")).map(
+                (element: Element): Element[] => Array.from(element.querySelectorAll("td"))
+            );
 
             const theaders: string[] = elementTHeader.map(
                 (element: Element): string => <string>element.textContent
@@ -237,11 +235,11 @@ export class CAPEReport {
      */
     scrapeQuestionnaire(): Map<string, any>[] {
         return [
-            ...[...Array(3).keys()].map((x) => x + 1).map(this.scrapeIndividualQuestion),
-            ...[...Array(3).keys()].map((x) => x + 5).map(this.scrapeIndividualQuestion),
-            ...[...Array(5).keys()].map((x) => x + 9).map((x) => this.scrapeQuestionGroup(9, x)),
+            ...Array.from(Array(3).keys()).map((x) => x + 1).map(this.scrapeIndividualQuestion),
+            ...Array.from(Array(3).keys()).map((x) => x + 5).map(this.scrapeIndividualQuestion),
+            ...Array.from(Array(5).keys()).map((x) => x + 9).map((x) => this.scrapeQuestionGroup(9, x)),
             this.scrapeIndividualQuestion(14),
-            ...[...Array(10).keys()].map((x) => x + 16).map((x) => this.scrapeQuestionGroup(16, x)),
+            ...Array.from(Array(10).keys()).map((x) => x + 16).map((x) => this.scrapeQuestionGroup(16, x)),
             this.scrapeIndividualQuestion(28)
         ];
     }
@@ -257,10 +255,10 @@ export class CAPEReport {
 
         const reGrade: RegExp = /^([ABCDF][+\-]?)\s\((\d+\.\d+)\)$/;
 
-        const textOptions: string[] = [...elementOptions.getElementsByTagName("td")].map(
+        const textOptions: string[] = Array.from(elementOptions.getElementsByTagName("td")).map(
             (element) => element.innerText
         );
-        const textResponses: string[] = [...elementResponses.getElementsByTagName("td")].slice(1).map(
+        const textResponses: string[] = Array.from(elementResponses.getElementsByTagName("td")).slice(1).map(
             (element) => element.innerText
         );
 
