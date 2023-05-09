@@ -8,7 +8,6 @@
  * @param {*} message 
  * @param {*} sender 
  * @param {*} sendResponse 
- * @returns 
  */
 function scrapeCAPEPage(message, sender, sendResponse) {
     let payload;
@@ -24,6 +23,8 @@ function scrapeCAPEPage(message, sender, sendResponse) {
     }
 
     sendResponse(payload);
+
+    return true;
 }
 
 
@@ -32,12 +33,6 @@ function scrapeCAPEPage(message, sender, sendResponse) {
  */
 class CAPEResults {
     CAPEType = "results";
-    headers = [
-        "Instructor", "Course", "CourseNumber", "SectionNumber", "ReportURL",
-        "Term", "Quarter", "Year", "Enrollment", "Evaluations",
-        "RecommendClass", "RecommendInstructor", "StudyHoursPerWeek", "AverageExpectedGrade", "expectedGPA",
-        "AverageReceivedGrade", "ReceivedGPA"
-    ];
 
     /**
      * 
@@ -49,7 +44,13 @@ class CAPEResults {
 
         this.results = [];
 
-        this.results.push(this.headers);
+        const headers = [
+            "Instructor", "Course", "CourseNumber", "SectionNumber", "ReportURL",
+            "Term", "Quarter", "Year", "Enrollment", "Evaluations",
+            "RecommendClass", "RecommendInstructor", "StudyHoursPerWeek", "AverageExpectedGrade", "expectedGPA",
+            "AverageReceivedGrade", "ReceivedGPA"
+        ];
+        this.results.push(headers);
         this.results.push(...this.scrapeRows());
     }
 
@@ -114,36 +115,38 @@ class CAPEReport {
     constructor(sectionID) {
         this.sectionID = sectionID;
 
-        this.report = new Map();
+        const report = new Map();
 
-        this.report.set(
+        report.set(
             "ReportTitle",
             document.getElementById("ContentPlaceHolder1_lblReportTitle")?.innerText
         );
-        this.report.set(
+        report.set(
             "CourseDescription",
-            document.getElementById("ContentPlaceHolder1_lblCourseDescription")?.innerText
+            document.getElementById("ContentPlaceHolder1_lblCourseDescription").innerText
         );
-        this.report.set(
+        report.set(
             "Instructor",
-            document.getElementById("ContentPlaceHolder1_lblInstructorName")?.innerText
+            document.getElementById("ContentPlaceHolder1_lblInstructorName").innerText
         );
-        this.report.set(
+        report.set(
             "Quarter",
-            document.getElementById("ContentPlaceHolder1_lblTermCode")?.innerText
+            document.getElementById("ContentPlaceHolder1_lblTermCode").innerText
         );
-        this.report.set(
+        report.set(
             "Enrollment",
-            parseInt(document.getElementById("ContentPlaceHolder1_lblEnrollment")?.innerText)
+            parseInt(document.getElementById("ContentPlaceHolder1_lblEnrollment").innerText)
         );
-        this.report.set(
+        report.set(
             "Evaluations",
-            parseInt(document.getElementById("ContentPlaceHolder1_lblEvaluationsSubmitted")?.innerText)
+            parseInt(document.getElementById("ContentPlaceHolder1_lblEvaluationsSubmitted").innerText)
         );
 
-        this.report.set("Statistics", this.scrapeStatistics());
-        this.report.set("Grades", this.scrapeGrades());
-        this.report.set("Questionnaire", this.scrapeQuestionnaire());
+        report.set("Statistics", this.scrapeStatistics());
+        report.set("Grades", this.scrapeGrades());
+        report.set("Questionnaire", this.scrapeQuestionnaire());
+
+        this.report = Object.fromEntries(report.entries());
     }
     
     /**
@@ -166,31 +169,31 @@ class CAPEReport {
         match = reGrade.exec(elementTData[0].innerText.trim());
         res.set(
             "RecommendInstructor",
-            new Map([["n", parseInt(match[1])], ["pct", match[2]]])
+            {n: parseInt(match[1]), pct: match[2]}
         );
 
         // "Recommend the course"
         match = reGrade.exec(elementTData[1].innerText.trim());
         res.set(
             "RecommendCourse",
-            new Map([["n", parseInt(match[1])], ["pct", match[2]]])
+            {n: parseInt(match[1]), pct: match[2]}
         );
 
         // "Exams represent the course material"
         match = reResponse.exec(elementTData[2].innerText.trim());
         res.set(
             "ExamsRepresentCourseMaterial",
-            new Map([["rating", parseFloat(match[1])], ["response", match[2]]])
+            {avgRating: parseFloat(match[1]), avgResponse: match[2]}
         );
 
         // "Instructor is clear and audible"
-        match = reResponse.exec(elementTData?.at(3)?.textContent?.trim());
+        match = reResponse.exec(elementTData[3].innerText.trim());
         res.set(
             "InstructorClearAndAudible",
-            new Map([["rating", parseFloat(match[1])], ["response", match[2]]])
+            {avgRating: parseFloat(match[1]), avgResponse: match[2]}
         );
 
-        return res;
+        return Object.fromEntries(res.entries());
     }
 
     /**
@@ -232,14 +235,14 @@ class CAPEReport {
 
             const gradeData = new Map();
             for (let j = 0; j < theaders.length; ++j) {
-                gradeData.set(theaders[j], new Map([["n", parseInt(tdata[0][j])], ["pct", tdata[1][j]]]));
+                gradeData.set(theaders[j], {n: parseInt(tdata[0][j]), pct: tdata[1][j]});
             }
-            data.set("Grades", gradeData);
+            data.set("Grades", Object.fromEntries(gradeData));
 
-            res.set(key, data);
+            res.set(key, Object.fromEntries(data));
         }
 
-        return res;
+        return Object.fromEntries(res.entries());
     }
 
     /**
@@ -312,20 +315,17 @@ class CAPEReport {
         responses.push(
             ...Array.from(elementResponses).slice(1, -3).map(
                 (e) => {
-                    const data = new Map();
                     const match = reGrade.exec(e.innerHTML);
-                    data.set("n", parseInt(match?.at(1)));
-                    data.set("pct", match?.at(2));
-                    return data;
+                    return {n: parseInt(match[1]), pct: match[2]};
                 }
             )
         )
         responses.push(parseInt(textResponses.at(-3)));
-        responses.push(parseFloat((textOptions.at(-2))));
-        responses.push(parseFloat((textOptions.at(-1))));
+        responses.push(parseFloat((textResponses.at(-2))));
+        responses.push(parseFloat((textResponses.at(-1))));
 
         options.forEach((x) => { res.set(x, responses[options.indexOf(x)]); });
-        return res;
+        return Object.fromEntries(res);
     }
 }
 
