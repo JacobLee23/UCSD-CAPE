@@ -23,8 +23,6 @@ function scrapeCAPEPage(message, sender, sendResponse) {
     }
 
     sendResponse(payload);
-
-    return true;
 }
 
 
