@@ -31,12 +31,13 @@ function scrapeCAPEPage(message, sender, sendResponse) {
  * 
  */
 class CAPEResults {
+    CAPEType = "results";
     headers = [
         "Instructor", "Course", "CourseNumber", "SectionNumber", "ReportURL",
         "Term", "Quarter", "Year", "Enrollment", "Evaluations",
         "RecommendClass", "RecommendInstructor", "StudyHoursPerWeek", "AverageExpectedGrade", "expectedGPA",
         "AverageReceivedGrade", "ReceivedGPA"
-    ]
+    ];
 
     /**
      * 
@@ -104,6 +105,7 @@ class CAPEResults {
  * 
  */
 class CAPEReport {
+    CAPEType = "report";
 
     /**
      * 
