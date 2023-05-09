@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UCSD CAPE Scraper",
-  "version": "0.1.2",
+  "version": "0.1.3",
 
   "action": {
     "default_icon": {
@@ -11,7 +11,7 @@
     },
     "default_title": "UCSD CAPE Scraper"
   },
-  "description": "UCSD Course and Professor Evaluations (CAPE) web scraper",
+  "description": "Web scraper for the UCSD Course and Professor Evaluations (CAPE) webpage.",
   "icons": {
     "16": "src/icons/icon-16.png",
     "32": "src/icons/icon-32.png",
