@@ -48,8 +48,6 @@ class CAPEResults {
 
         this.results = [];
 
-        this.elementTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
-
         this.results.push(this.headers);
         this.results.push(...this.scrapeRows());
     }
@@ -59,7 +57,8 @@ class CAPEResults {
      * @returns 
      */
     scrapeRows() {
-        const elementRows = Array.from(this.elementTable.querySelectorAll("tbody > tr")).map(
+        const elementTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
+        const elementRows = Array.from(elementTable.querySelectorAll("tbody > tr")).map(
             (element) => Array.from(element.querySelectorAll("td"))
         );
 
