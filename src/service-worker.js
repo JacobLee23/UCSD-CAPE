@@ -6,7 +6,6 @@
 /**
  * 
  * @param {*} tab 
- * @returns 
  */
 function scrapeCAPEPage(tab) {
     if (!(tab.url && tab.url.includes("cape.ucsd.edu/responses/"))) { return; }
@@ -22,8 +21,40 @@ function scrapeCAPEPage(tab) {
     else { return; }
 
     const data = Object.fromEntries(message);
-    const response = chrome.tabs.sendMessage(tab.id, data);
-    response.then((x) => { console.log(x); });
+    const response = chrome.tabs.sendMessage(tab.id, data).then(
+        (x) => { downloadCAPEData(x); }
+    );
+}
+
+
+/**
+ * 
+ * @param {*} payload 
+ * @returns 
+ */
+function downloadCAPEData(payload) {
+    if (!payload.capeType) { return; }
+
+    const dataURL = [
+        "data:text/json;charset=utf-8",
+        encodeURIComponent(JSON.stringify(payload))
+    ].join(",");
+
+    let filename;
+    switch (payload.capeType) {
+        case "results":
+            filename = `CAPEResults-${payload.courseNumber.split(" ").join("")}-${Date.now()}.json`;
+            break;
+        case "report":
+            filename = `CAPEReport-${payload.sectionID}-${Date.now()}.json`;
+            break;
+        default:
+            return;
+    }
+
+    chrome.downloads.download(
+        {filename: filename, saveAs: true, url: dataURL}
+    );
 }
 
 
