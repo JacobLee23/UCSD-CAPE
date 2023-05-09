@@ -32,7 +32,7 @@ function scrapeCAPEPage(message, sender, sendResponse) {
  * 
  */
 class CAPEResults {
-    CAPEType = "results";
+    capeType = "results";
 
     /**
      * 
@@ -45,10 +45,10 @@ class CAPEResults {
         this.results = [];
 
         const headers = [
-            "Instructor", "Course", "CourseNumber", "SectionNumber", "ReportURL",
-            "Term", "Quarter", "Year", "Enrollment", "Evaluations",
-            "RecommendClass", "RecommendInstructor", "StudyHoursPerWeek", "AverageExpectedGrade", "expectedGPA",
-            "AverageReceivedGrade", "ReceivedGPA"
+            "instructor", "course", "courseNumber", "sectionNumber", "reportURL",
+            "term", "quarter", "year", "enrollment", "evaluations",
+            "recdClass", "recdInstructor", "studyHoursPerWeek", "avgExpectedGrade", "expectedGPA",
+            "avgReceivedGrade", "receivedGPA"
         ];
         this.results.push(headers);
         this.results.push(...this.scrapeRows());
@@ -106,7 +106,7 @@ class CAPEResults {
  * 
  */
 class CAPEReport {
-    CAPEType = "report";
+    capeType = "report";
 
     /**
      * 
@@ -118,33 +118,33 @@ class CAPEReport {
         const report = new Map();
 
         report.set(
-            "ReportTitle",
+            "reportTitle",
             document.getElementById("ContentPlaceHolder1_lblReportTitle")?.innerText
         );
         report.set(
-            "CourseDescription",
+            "courseDescription",
             document.getElementById("ContentPlaceHolder1_lblCourseDescription").innerText
         );
         report.set(
-            "Instructor",
+            "instructor",
             document.getElementById("ContentPlaceHolder1_lblInstructorName").innerText
         );
         report.set(
-            "Quarter",
+            "quarter",
             document.getElementById("ContentPlaceHolder1_lblTermCode").innerText
         );
         report.set(
-            "Enrollment",
+            "enrollment",
             parseInt(document.getElementById("ContentPlaceHolder1_lblEnrollment").innerText)
         );
         report.set(
-            "Evaluations",
+            "evaluations",
             parseInt(document.getElementById("ContentPlaceHolder1_lblEvaluationsSubmitted").innerText)
         );
 
-        report.set("Statistics", this.scrapeStatistics());
-        report.set("Grades", this.scrapeGrades());
-        report.set("Questionnaire", this.scrapeQuestionnaire());
+        report.set("statistics", this.scrapeStatistics());
+        report.set("grades", this.scrapeGrades());
+        report.set("questionnaire", this.scrapeQuestionnaire());
 
         this.report = Object.fromEntries(report.entries());
     }
@@ -168,28 +168,28 @@ class CAPEReport {
         // "Recommend the instructor"
         match = reGrade.exec(elementTData[0].innerText.trim());
         res.set(
-            "RecommendInstructor",
+            "recdInstructor",
             {n: parseInt(match[1]), pct: match[2]}
         );
 
         // "Recommend the course"
         match = reGrade.exec(elementTData[1].innerText.trim());
         res.set(
-            "RecommendCourse",
+            "recdCourse",
             {n: parseInt(match[1]), pct: match[2]}
         );
 
         // "Exams represent the course material"
         match = reResponse.exec(elementTData[2].innerText.trim());
         res.set(
-            "ExamsRepresentCourseMaterial",
+            "examsRepresentCourseMaterial",
             {avgRating: parseFloat(match[1]), avgResponse: match[2]}
         );
 
         // "Instructor is clear and audible"
         match = reResponse.exec(elementTData[3].innerText.trim());
         res.set(
-            "InstructorClearAndAudible",
+            "instructorClearAndAudible",
             {avgRating: parseFloat(match[1]), avgResponse: match[2]}
         );
 
@@ -225,8 +225,8 @@ class CAPEReport {
             );
 
             const match = reAverageGrade.exec(elementHeader.innerHTML);
-            data.set("AverageGrade", match?.at(1));
-            data.set("GPA", parseFloat(match?.at(2)));
+            data.set("avgGrade", match?.at(1));
+            data.set("gpa", parseFloat(match?.at(2)));
 
             const theaders = elementTHeader.map((element) => element.textContent);
             const tdata = elementTData.map(
@@ -237,7 +237,7 @@ class CAPEReport {
             for (let j = 0; j < theaders.length; ++j) {
                 gradeData.set(theaders[j], {n: parseInt(tdata[0][j]), pct: tdata[1][j]});
             }
-            data.set("Grades", Object.fromEntries(gradeData));
+            data.set("grades", Object.fromEntries(gradeData));
 
             res.set(key, Object.fromEntries(data));
         }
@@ -307,7 +307,7 @@ class CAPEReport {
         const textOptions = elementOptions.map((element) => element.innerText.trim());
         const textResponses = elementResponses.map((element) => element.innerText.trim());
 
-        const options = ["Prompt", ...textOptions.slice(0, -3), "n", "mean", "std"];
+        const options = ["prompt", ...textOptions.slice(0, -3), "n", "mean", "std"];
         const responses = [];
 
         responses.push(textResponses[0]);

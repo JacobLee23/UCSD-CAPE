@@ -33,7 +33,7 @@ function scrapeCAPEPage(tab) {
  * @returns 
  */
 function downloadCAPEData(payload) {
-    if (!payload.CAPEType) { return; }
+    if (!payload.capeType) { return; }
 
     const dataURL = [
         "data:text/json;charset=utf-8",
@@ -41,7 +41,7 @@ function downloadCAPEData(payload) {
     ].join(",");
 
     let filename;
-    switch (payload.CAPEType) {
+    switch (payload.capeType) {
         case "results":
             filename = `CAPEResults-${payload.courseNumber.split(" ").join("")}-${Date.now()}.json`;
             break;
