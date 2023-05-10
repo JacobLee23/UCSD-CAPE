@@ -43,10 +43,10 @@ class CAPEResults {
         this.results = [];
 
         const headers = [
-            "instructor", "course", "courseNumber", "sectionNumber", "reportURL",
-            "term", "quarter", "year", "enrollment", "evaluations",
-            "recdClass", "recdInstructor", "studyHoursPerWeek", "avgExpectedGrade", "expectedGPA",
-            "avgReceivedGrade", "receivedGPA"
+            "instructor", "course", "courseNumber", "sectionID", "reportURL",
+            "reportType", "term", "quarter", "year", "enrollment",
+            "evaluations", "recdClass", "recdInstructor", "studyHoursPerWeek", "avgExpectedGrade",
+            "expectedGPA", "avgReceivedGrade", "receivedGPA"
         ];
         this.results.push(headers);
         this.results.push(...this.scrapeRows());
@@ -64,21 +64,34 @@ class CAPEResults {
 
         let reCourseNumber = /^(\w{3,4})\s(\d{1,3}\w{0,2})/;
         let reGrade = /^([ABCDF][+\-]?)\s\((\d+\.\d+)\)$/;
-        let reReportURL = /^CAPEReport\.aspx\?sectionid=(\d+)$/;
-        let reTerm = /^(FA|WI|SP|S1|S2)(\d+)$/;
+        let reReportURL = /^(CAPEReport\.aspx\?sectionid=(\d+)|\.\.\/(scripts\/detailedStats\.asp\?SectionId=(\d+)))$/;
+        let reTerm = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
 
         const res = [];
         for (let i = 0; i < elementRows.length; ++i) {
             const elements = elementRows[i];
             const row = [];
 
-            const href = elements[1].querySelector("a")?.getAttribute("href");
+            const href = elements[1].querySelector("a").getAttribute("href");
+            const match = reReportURL.exec(href);
+            let sectionID = 0, reportType = "", url = "";
+            if (match?.at(2)) {
+                sectionID = parseInt(match[2]);
+                reportType = "CAPEReport";
+                url = `https://cape.ucsd.edu/${match[1]}`;
+            }
+            else if (match?.at(4)) {
+                sectionID = parseInt(match[4]);
+                reportType = "DetailedStats";
+                url = `https://cape.ucsd.edu/${match[3]}`;
+            }
             
             row.push(elements[0].innerText?.trim());
             row.push(elements[1].innerText?.trim());
             row.push(reCourseNumber.exec(elements[1].innerText?.trim())?.at(2));
-            row.push(parseInt(reReportURL.exec(href)?.at(1)));
-            row.push(`https://cape.ucsd.edu/${href}`);
+            row.push(sectionID);
+            row.push(url);
+            row.push(reportType);
             row.push(elements[2].innerText?.trim());
             row.push(reTerm.exec(elements[2].innerText?.trim())?.at(1));
             row.push(parseInt(reTerm.exec(elements[2].innerText?.trim())?.at(2)));
@@ -93,6 +106,8 @@ class CAPEResults {
             row.push(parseFloat(reGrade.exec(elements[9].innerText?.trim())?.at(2)));
 
             res.push(row);
+
+            console.log(row);
         }
 
         return res;
