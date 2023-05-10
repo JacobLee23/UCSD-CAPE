@@ -88,7 +88,7 @@ class CAPEResults {
             
             row.push(elements[0].innerText?.trim());
             row.push(elements[1].innerText?.trim());
-            row.push(reCourseNumber.exec(elements[1].innerText?.trim())?.at(2));
+            row.push(reCourseNumber.exec(elements[1].innerText?.trim())?.at(0));
             row.push(sectionID);
             row.push(url);
             row.push(reportType);
