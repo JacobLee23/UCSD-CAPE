@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ucsd-cape"
+version = "0.2.0"
+description = "Web scraper for the UCSD Course and Professor Evaluations (CAPE) website."
+readme = "README.md"
+authors = [ { name = "Jacob Lee", email = "Jacob.J.Lee@outlook.com" } ]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.6"
+
+[project.urls]
+homepage = "https://github.com/JacobLee23/UCSD-CAPE"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ucsdcape*"]
