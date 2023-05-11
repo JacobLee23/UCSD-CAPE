@@ -12,11 +12,14 @@
 function scrapeCAPEPage(message, sender, sendResponse) {
     let payload;
     switch (message.type) {
-        case "results":
+        case "CAPEResults":
             payload = new CAPEResults(message.queryParameters.Name, message.queryParameters.CourseNumber);
             break;
-        case "report":
+        case "CAPEReport":
             payload = new CAPEReport(parseInt(message.queryParameters.sectionid));
+            break;
+        case "SelfCAPE":
+            payload = new CAPEReport(parseInt(message.queryParameters.SectionId));
             break;
         default:
             payload = null;
@@ -30,7 +33,7 @@ function scrapeCAPEPage(message, sender, sendResponse) {
  * 
  */
 class CAPEResults {
-    capeType = "results";
+    capeType = "CAPEResults";
 
     /**
      * 
@@ -40,16 +43,16 @@ class CAPEResults {
     constructor(name, courseNumber) {
         this.name = name, this.courseNumber = courseNumber;
 
-        this.results = [];
+        this.data = [];
 
         const headers = [
             "instructor", "course", "courseNumber", "sectionID", "reportURL",
             "reportType", "term", "quarter", "year", "enrollment",
-            "evaluations", "recdClass", "recdInstructor", "studyHoursPerWeek", "avgExpectedGrade",
+            "evaluations", "recommendClass", "recommendInstructor", "studyHoursPerWeek", "avgExpectedGrade",
             "expectedGPA", "avgReceivedGrade", "receivedGPA"
         ];
-        this.results.push(headers);
-        this.results.push(...this.scrapeRows());
+        this.data.push(headers);
+        this.data.push(...this.scrapeRows());
     }
 
     /**
@@ -57,8 +60,8 @@ class CAPEResults {
      * @returns 
      */
     scrapeRows() {
-        const elementTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
-        const elementRows = Array.from(elementTable.querySelectorAll("tbody > tr")).map(
+        const eTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
+        const eTableData = Array.from(eTable.querySelectorAll("tbody > tr")).map(
             (element) => Array.from(element.querySelectorAll("td"))
         );
 
@@ -68,8 +71,8 @@ class CAPEResults {
         let reTerm = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
 
         const res = [];
-        for (let i = 0; i < elementRows.length; ++i) {
-            const elements = elementRows[i];
+        for (let i = 0; i < eTableData.length; ++i) {
+            const elements = eTableData[i];
             const row = [];
 
             const href = elements[1].querySelector("a").getAttribute("href");
@@ -82,7 +85,7 @@ class CAPEResults {
             }
             else if (match?.at(4)) {
                 sectionID = parseInt(match[4]);
-                reportType = "DetailedStats";
+                reportType = "SelfCAPE";
                 url = `https://cape.ucsd.edu/${match[3]}`;
             }
             
@@ -106,8 +109,6 @@ class CAPEResults {
             row.push(parseFloat(reGrade.exec(elements[9].innerText?.trim())?.at(2)));
 
             res.push(row);
-
-            console.log(row);
         }
 
         return res;
@@ -119,7 +120,7 @@ class CAPEResults {
  * 
  */
 class CAPEReport {
-    capeType = "report";
+    capeType = "CAPEReport";
 
     /**
      * 
@@ -128,38 +129,38 @@ class CAPEReport {
     constructor(sectionID) {
         this.sectionID = sectionID;
 
-        const report = new Map();
+        const data = new Map();
 
-        report.set(
+        data.set(
             "reportTitle",
             document.getElementById("ContentPlaceHolder1_lblReportTitle")?.innerText
         );
-        report.set(
+        data.set(
             "courseDescription",
             document.getElementById("ContentPlaceHolder1_lblCourseDescription").innerText
         );
-        report.set(
+        data.set(
             "instructor",
             document.getElementById("ContentPlaceHolder1_lblInstructorName").innerText
         );
-        report.set(
+        data.set(
             "quarter",
             document.getElementById("ContentPlaceHolder1_lblTermCode").innerText
         );
-        report.set(
+        data.set(
             "enrollment",
             parseInt(document.getElementById("ContentPlaceHolder1_lblEnrollment").innerText)
         );
-        report.set(
+        data.set(
             "evaluations",
             parseInt(document.getElementById("ContentPlaceHolder1_lblEvaluationsSubmitted").innerText)
         );
 
-        report.set("statistics", this.scrapeStatistics());
-        report.set("grades", this.scrapeGrades());
-        report.set("questionnaire", this.scrapeQuestionnaire());
+        data.set("statistics", this.scrapeStatistics());
+        data.set("grades", this.scrapeGrades());
+        data.set("questionnaire", this.scrapeQuestionnaire());
 
-        this.report = Object.fromEntries(report.entries());
+        this.data = Object.fromEntries(data.entries());
     }
     
     /**
@@ -169,42 +170,30 @@ class CAPEReport {
     scrapeStatistics() {
         const res = new Map();
 
-        const elementTable = document.getElementById("ContentPlaceHolder1_tblStatistics");
-        const elementTData = Array.from(
-            elementTable.querySelectorAll("tbody > tr:first-child > td > span")
-        );
+        const eTable = document.getElementById("ContentPlaceHolder1_tblStatistics");
+        const eTableData = Array.from(eTable.querySelectorAll("tbody > tr:first-child > td > span"));
 
-        const reGrade = /^(\d+)\s(\d+%)$/;
-        const reResponse = /(\d+\.\d+)\s\((.*)\)/;
-        let match;
+        let re, match;
+
+        re = /^(\d+)\s(\d+%)$/;
 
         // "Recommend the instructor"
-        match = reGrade.exec(elementTData[0].innerText.trim());
-        res.set(
-            "recdInstructor",
-            {n: parseInt(match[1]), pct: match[2]}
-        );
+        match = re.exec(eTableData[0].innerText.trim());
+        res.set("recommendInstructor", {n: parseInt(match[1]), pct: match[2]});
 
         // "Recommend the course"
-        match = reGrade.exec(elementTData[1].innerText.trim());
-        res.set(
-            "recdCourse",
-            {n: parseInt(match[1]), pct: match[2]}
-        );
+        match = re.exec(eTableData[1].innerText.trim());
+        res.set("recommendCourse", {n: parseInt(match[1]), pct: match[2]});
+
+        re = /(\d+\.\d+)\s\((.*)\)/;
 
         // "Exams represent the course material"
-        match = reResponse.exec(elementTData[2].innerText.trim());
-        res.set(
-            "examsRepresentCourseMaterial",
-            {avgRating: parseFloat(match[1]), avgResponse: match[2]}
-        );
+        match = re.exec(eTableData[2].innerText.trim());
+        res.set("examsRepresentCourseMaterial", {avgRating: parseFloat(match[1]), avgResponse: match[2]});
 
         // "Instructor is clear and audible"
-        match = reResponse.exec(elementTData[3].innerText.trim());
-        res.set(
-            "instructorClearAndAudible",
-            {avgRating: parseFloat(match[1]), avgResponse: match[2]}
-        );
+        match = re.exec(eTableData[3].innerText.trim());
+        res.set("instructorClearAndAudible", {avgRating: parseFloat(match[1]), avgResponse: match[2]});
 
         return Object.fromEntries(res.entries());
     }
@@ -220,7 +209,7 @@ class CAPEReport {
 
         const res = new Map();
 
-        const reAverageGrade = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
+        const re = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
 
         let key, value;
         let entries = Array.from(grades.entries());
@@ -229,26 +218,26 @@ class CAPEReport {
 
             const data = new Map();
 
-            const elementGrade = document.getElementById(value);
-            const elementHeader = elementGrade.querySelector("h4 > span");
-            const elementTable = elementGrade.querySelector("table.styled");
-            const elementTHeader = Array.from(elementTable.querySelectorAll("thead > tr:first-child > th"));
-            const elementTData = Array.from(elementTable.querySelectorAll("tbody > tr")).map(
+            const eGrade = document.getElementById(value);
+            const eHeader = eGrade.querySelector("h4 > span");
+            const eTable = eGrade.querySelector("table.styled");
+            const eTableHeader = Array.from(eTable.querySelectorAll("thead > tr:first-child > th"));
+            const eTableData = Array.from(eTable.querySelectorAll("tbody > tr")).map(
                 (element) => Array.from(element.querySelectorAll("td"))
             );
 
-            const match = reAverageGrade.exec(elementHeader.innerHTML);
+            const match = re.exec(eHeader.innerHTML);
             data.set("avgGrade", match?.at(1));
             data.set("gpa", parseFloat(match?.at(2)));
 
-            const theaders = elementTHeader.map((element) => element.textContent);
-            const tdata = elementTData.map(
+            const tableHeaders = eTableHeader.map((element) => element.textContent);
+            const tableData = eTableData.map(
                 (a) => a.map((element) => element.textContent?.split(" ").join(""))
             );
 
             const gradeData = new Map();
-            for (let j = 0; j < theaders.length; ++j) {
-                gradeData.set(theaders[j], {n: parseInt(tdata[0][j]), pct: tdata[1][j]});
+            for (let j = 0; j < tableHeaders.length; ++j) {
+                gradeData.set(tableHeaders[j], {n: parseInt(tableData[0][j]), pct: tableData[1][j]});
             }
             data.set("grades", Object.fromEntries(gradeData));
 
@@ -306,39 +295,117 @@ class CAPEReport {
 
     /**
      * 
-     * @param {*} containerOptions 
-     * @param {*} containerResponses 
+     * @param {*} eOptionsContainer 
+     * @param {*} eResponsesContainer 
      * @returns 
      */
-    scrapeQuestion(containerOptions, containerResponses) {
+    scrapeQuestion(eOptionsContainer, eResponsesContainer) {
         const res = new Map();
 
-        const reGrade = /^(\d+)<br>(\d+%)<br>$/;
+        const re = /^(\d+)<br>(\d+%)<br>$/;
 
-        const elementOptions = Array.from(containerOptions.querySelectorAll("td")).slice(1);
-        const elementResponses = Array.from(containerResponses.parentElement.querySelectorAll("td span")).slice(1);
-        const textOptions = elementOptions.map((element) => element.innerText.trim());
-        const textResponses = elementResponses.map((element) => element.innerText.trim());
+        const eOptions = Array.from(eOptionsContainer.querySelectorAll("td")).slice(1);
+        const eResponses = Array.from(eResponsesContainer.parentElement.querySelectorAll("td span")).slice(1);
 
-        const options = ["prompt", ...textOptions.slice(0, -3), "n", "mean", "std"];
-        const responses = [];
-
-        responses.push(textResponses[0]);
-        responses.push
-        responses.push(
-            ...Array.from(elementResponses).slice(1, -3).map(
+        const options = [
+            "prompt",
+            ...eOptions.slice(0, -3).map((e) => (e.innerText.trim())),
+            "n", "mean", "std"
+        ];
+        const responses = [
+            eResponses[0].innerText.trim(),
+            ...eResponses.slice(1, -3).map(
                 (e) => {
-                    const match = reGrade.exec(e.innerHTML);
+                    const match = re.exec(e.innerHTML);
                     return {n: parseInt(match[1]), pct: match[2]};
                 }
-            )
-        )
-        responses.push(parseInt(textResponses.at(-3)));
-        responses.push(parseFloat((textResponses.at(-2))));
-        responses.push(parseFloat((textResponses.at(-1))));
+            ),
+            parseInt(eResponses.at(-3).innerText.trim()),
+            parseFloat(eResponses.at(-2).innerText.trim()),
+            parseFloat(eResponses.at(-1).innerText.trim())
+        ];
 
         options.forEach((x) => { res.set(x, responses[options.indexOf(x)]); });
         return Object.fromEntries(res);
+    }
+}
+
+
+class SelfCAPE {
+    capeType = "SelfCAPE";
+
+    constructor(sectionID) {
+        this.sectionID = sectionID;
+
+        const data = new Map();
+
+        data.set("details", this.scrapeDetails());
+        data.set("classLevel", this.scrapeClassLevel());
+        data.set("reasonForTakingClass", this.scrapeReasonForTakingClass());
+        data.set("expectedGrade", this.scrapeExpectedGrade());
+        data.set("questionnaire", this.scrapeQuestionnaire());
+        data.set("studyHoursPerWeek", this.scrapeStudyHoursPerWeek());
+        data.set("attendanceFrequency", this.scrapeAttendanceFrequency());
+        data.set("recommendCourse", this.scrapeRecommendCourse());
+        data.set("recommendInstructor", this.scrapeRecommendInstructor());
+
+        this.data = Object.fromEntries(data.entries());
+    }
+
+    scrapeDetails() {
+        const eTable = document.querySelector("table:nth-child(1)");
+    }
+
+    scrapeClassLevel() {
+        res = new Map();
+
+        const eTable = document.querySelector("table:nth-child(2)");
+        const eHeaders = Array.from(eTable.querySelectorAll("tr:nth-child(1) > th"));
+        const ePrompt = eTable.querySelector("tr:nth-child(2) > td:nth-child(2)");
+        const eData = Array.from(eTable.querySelectorAll("tr:nth-child(2) > td")).slice(3);
+        const ePercentages = Array.from(eTable.querySelectorAll("tr:nth-child(3) > td")).slice(3);
+
+        const headers = ["prompt", ...eHeaders.map((e) => e.innerText.trim())];
+        const data = [];
+
+        data.push(ePrompt.innerText.trim());
+        for (let i = 0; i < eData.length - 1; ++i) {
+            data.push(
+                {n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()}
+            );
+        }
+        data.push(parseInt(eData.at(-1).innerText.trim()));
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
+    }
+
+    scrapeReasonForTakingClass() {
+        const eTable = document.querySelector("table:nth-child(3)");
+    }
+
+    scrapeExpectedGrade() {
+        const eTable = document.querySelector("table:nth-child(4)");
+    }
+
+    scrapeQuestionnaire() {
+        const eTable = document.querySelector("table:nth-child(5)");
+    }
+
+    scrapeStudyHoursPerWeek() {
+        const eTable = document.querySelector("table:nth-child(6)");
+    }
+
+    scrapeAttendanceFrequency() {
+        const eTable = document.querySelector("table:nth-child(7)");
+    }
+
+    scrapeRecommendCourse() {
+        const eTable = document.querySelector("table:nth-child(8)");
+    }
+
+    scrapeRecommendInstructor() {
+        const eTable = document.querySelector("table:nth-child(9)");
     }
 }
 
