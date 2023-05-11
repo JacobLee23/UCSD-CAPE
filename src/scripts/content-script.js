@@ -390,7 +390,6 @@ class SelfCAPE {
         const ePercentages = Array.from(eTable.querySelectorAll("tr:nth-child(3) > td")).slice(3);
 
         const headers = ["prompt", ...eHeaders.slice(0, -2).map((e) => e.innerText.trim()), "n"];
-        console.log(headers);
         const data = [];
 
         data.push(ePrompt.innerText.trim());
@@ -406,7 +405,28 @@ class SelfCAPE {
     }
 
     scrapeExpectedGrade() {
+        const res = new Map();
+
         const eTable = document.querySelector("table:nth-child(4)");
+        const eHeaders = Array.from(eTable.querySelectorAll("tr:nth-child(1) > th"));
+        const ePrompt = eTable.querySelector("tr:nth-child(2) > td:nth-child(2)");
+        const eData = Array.from(eTable.querySelectorAll("tr:nth-child(2) > td")).slice(2);
+        const ePercentages = Array.from(eTable.querySelectorAll("tr:nth-child(3) > td")).slice(3);
+
+        const headers = ["prompt", ...eHeaders.slice(0, -2).map((e) => e.innerText.trim()), "n", "expectedGPA"];
+        const data = [];
+        
+        data.push(ePrompt.innerText.trim());
+        for (let i = 0; i < eData.length - 2; ++i) {
+            data.push(
+                {n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()}
+            );
+        }
+        data.push(parseInt(eData.at(-2).innerText.trim()));
+        data.push(parseFloat(eData.at(-1).innerText.trim()));
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
     }
 
     scrapeQuestionnaire() {
