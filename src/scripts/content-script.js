@@ -19,7 +19,7 @@ function scrapeCAPEPage(message, sender, sendResponse) {
             payload = new CAPEReport(parseInt(message.queryParameters.sectionid));
             break;
         case "SelfCAPE":
-            payload = new CAPEReport(parseInt(message.queryParameters.SectionId));
+            payload = new SelfCAPE(parseInt(message.queryParameters.SectionId));
             break;
         default:
             payload = null;
@@ -339,7 +339,21 @@ class SelfCAPE {
 
         const data = new Map();
 
-        data.set("details", this.scrapeDetails());
+        const re = /\d+$/;
+        const eTable = document.querySelector("table:nth-child(1)");
+        data.set("subject", eTable.querySelector("tbody > tr:first-child > td:nth-child(1)").innerText.trim());
+        data.set("courseNumber", eTable.querySelector("tbody > tr:first-child > td:nth-child(2)").innerText.trim());
+        data.set("instructor", eTable.querySelector("tbody > tr:first-child > td:nth-child(4)").innerText.trim());
+        data.set("term", eTable.querySelector("tbody > tr:first-child > td:nth-child(5)").innerText.trim());
+        data.set(
+            "enrollment",
+            parseInt(re.exec(eTable.querySelector("tbody > tr:last-child > td:nth-child(4)").innerText.trim())?.at(0))
+        );
+        data.set(
+            "evaluations",
+            parseInt(re.exec(eTable.querySelector("tbody > tr:last-child > td:nth-child(5)").innerText.trim())?.at(0))
+        )
+
         data.set("classLevel", this.scrapeClassLevel());
         data.set("enrollmentReason", this.scrapeEnrollmentReason());
         data.set("expectedGrade", this.scrapeExpectedGrade());
@@ -352,12 +366,8 @@ class SelfCAPE {
         this.data = Object.fromEntries(data.entries());
     }
 
-    scrapeDetails() {
-        const eTable = document.querySelector("table:nth-child(1)");
-    }
-
     scrapeClassLevel() {
-        res = new Map();
+        const res = new Map();
 
         const eTable = document.querySelector("table:nth-child(2)");
         const eHeaders = Array.from(eTable.querySelectorAll("tr:nth-child(1) > th"));
@@ -381,7 +391,7 @@ class SelfCAPE {
     }
 
     scrapeEnrollmentReason() {
-        res = new Map();
+        const res = new Map();
 
         const eTable = document.querySelector("table:nth-child(3)");
         const eHeaders = Array.from(eTable.querySelectorAll("tr:nth-child(1) > th"));

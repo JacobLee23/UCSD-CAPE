@@ -8,7 +8,7 @@
  * @param {*} tab 
  */
 function scrapeCAPEPage(tab) {
-    if (!(tab.url && tab.url.includes("cape.ucsd.edu/responses/"))) { return; }
+    if (!tab.url) { return; }
 
     const queryParameters = new URLSearchParams(tab.url.split("?")[1]);
 
@@ -50,7 +50,7 @@ function downloadCAPEData(payload) {
             filename = `CAPEReport-${payload.sectionID}-${Date.now()}.json`;
             break;
         case "SelfCAPE":
-            filename = `SelfCAPE-${payload.sectionID}-${Dat.now()}.json`;
+            filename = `SelfCAPE-${payload.sectionID}-${Date.now()}.json`;
             break;
         default:
             return;
