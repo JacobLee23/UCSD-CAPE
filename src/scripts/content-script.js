@@ -446,23 +446,25 @@ class SelfCAPE {
     scrapeStudyHoursPerWeek() {
         const res = new Map();
 
-        const eTable = document.querySelector("table:nth-child(6)");
-        const eHeaders = Array.from(eTable.querySelectorAll("tr:nth-child(1) > td")).slice(2);
-        const ePrompt = eTable.querySelector("tr:nth-child(2) > td:nth-child(2)");
-        const eData = Array.from(eTable.querySelectorAll("tr:nth-child(2) > td")).slice(2);
-        const ePercentages = Array.from(eTable.querySelectorAll("tr:nth-child(3) > td")).slice(2);
-
-        const headers = ["prompt", ...eHeaders.slice(0, -2).map((e) => e.innerText.trim()), "n", "mean"];
-        const data = [];
-
-        data.push(ePrompt.innerText.trim());
-        for (let i = 0; i < eData.length - 2; ++i) {
-            data.push(
-                {n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()}
-            );
+        const css = {
+            table: "table:nth-child(6)",
+            headers: "tr:nth-child(1) > td",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td",
+            percentages: "tr:nth-child(3) > td"
         }
-        data.push(parseInt(eData.at(-2).innerText.trim()));
-        data.push(parseFloat(eData.at(-1).innerText.trim()));
+
+        const headers = [
+            "prompt",
+            ...this.scrapeTableHeaders(css.table, css.headers).slice(2, -2),
+            "n", "mean"
+        ];
+        const data = [
+            this.scrapeTablePrompt(css.table, css.prompt),
+            ...this.scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim()),
+            parseFloat(document.querySelector(`${css.table} ${css.data}:nth-last-child(1)`).innerText.trim())
+        ]
 
         headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
         return Object.fromEntries(res.entries());
@@ -478,6 +480,27 @@ class SelfCAPE {
 
     scrapeRecommendInstructor() {
         const eTable = document.querySelector("table:nth-child(9)");
+    }
+
+    scrapeTableHeaders(cssTable, cssHeaders) {
+        return Array.from(document.querySelectorAll(`${cssTable} ${cssHeaders}`)).map(
+            (e) => e.innerText.trim()
+        );
+    }
+
+    scrapeTablePrompt(cssTable, cssPrompt) {
+        return document.querySelector(`${cssTable} ${cssPrompt}`).innerText.trim();
+    }
+
+    scrapeTableContent(cssTable, cssData, cssPercentages) {
+        const eData = document.querySelectorAll(`${cssTable} ${cssData}`);
+        const ePercentages = document.querySelectorAll(`${cssTable} ${cssPercentages}`);
+
+        const res = [];
+        for (let i = 0; i < (eData.length < ePercentages.length ? eData.length : ePercentages.length); ++i) {
+            res.push({n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()});
+        }
+        return res
     }
 }
 
