@@ -390,22 +390,22 @@ class SelfCAPE {
     scrapeClassLevel() {
         const res = new Map();
 
-        const eTable = document.querySelector("table:nth-child(2)");
-        const eHeaders = Array.from(eTable.querySelectorAll("tr:nth-child(1) > th"));
-        const ePrompt = eTable.querySelector("tr:nth-child(2) > td:nth-child(2)");
-        const eData = Array.from(eTable.querySelectorAll("tr:nth-child(2) > td")).slice(3);
-        const ePercentages = Array.from(eTable.querySelectorAll("tr:nth-child(3) > td")).slice(3);
+        const css = {
+            table: "table:nth-child(2)",
+            headers: "tr:nth-child(1) > th",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td",
+            percentages: "tr:nth-child(3) > td"
+        };
 
-        const headers = ["prompt", ...eHeaders.slice(0, -1).map((e) => e.innerText.trim()), "n"];
-        const data = [];
-
-        data.push(ePrompt.innerText.trim());
-        for (let i = 0; i < eData.length - 1; ++i) {
-            data.push(
-                {n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()}
-            );
-        }
-        data.push(parseInt(eData.at(-1).innerText.trim()));
+        const headers = [
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(0, -1), "n"
+        ];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(3, -1),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(1)`).innerText.trim())
+        ];
 
         headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
         return Object.fromEntries(res.entries());
