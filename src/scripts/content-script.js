@@ -253,12 +253,12 @@ class CAPEReport {
      */
     scrapeQuestionnaire() {
         return [
-            ...Array.from(Array(3).keys()).map((x) => x + 1).map((x) => this.scrapeIndividualQuestion(x)),
-            ...Array.from(Array(3).keys()).map((x) => x + 5).map((x) => this.scrapeIndividualQuestion(x)),
-            ...Array.from(Array(5).keys()).map((x) => x + 9).map((x) => this.scrapeQuestionGroup(9, x)),
-            this.scrapeIndividualQuestion(14),
-            ...Array.from(Array(10).keys()).map((x) => x + 16).map((x) => this.scrapeQuestionGroup(16, x)),
-            this.scrapeIndividualQuestion(28)
+            ...Array.from(Array(3).keys()).map((x) => x + 1).map((x) => this._scrapeIndividualQuestion(x)),
+            ...Array.from(Array(3).keys()).map((x) => x + 5).map((x) => this._scrapeIndividualQuestion(x)),
+            ...Array.from(Array(5).keys()).map((x) => x + 9).map((x) => this._scrapeQuestionGroup(9, x)),
+            this._scrapeIndividualQuestion(14),
+            ...Array.from(Array(10).keys()).map((x) => x + 16).map((x) => this._scrapeQuestionGroup(16, x)),
+            this._scrapeIndividualQuestion(28)
         ];
     }
 
@@ -267,14 +267,14 @@ class CAPEReport {
      * @param {*} nChoiceText 
      * @returns 
      */
-    scrapeIndividualQuestion(nChoiceText) {
+    _scrapeIndividualQuestion(nChoiceText) {
         const idChoiceText = `ContentPlaceHolder1_dlQuestionnaire_trChoiceText_${nChoiceText}`;
         const idQuestionText = `ContentPlaceHolder1_dlQuestionnaire_tdQuestionText_${nChoiceText}`;
         
         const containerOptions = document.getElementById(idChoiceText);
         const containerResponses = document.getElementById(idQuestionText);
         
-        return this.scrapeQuestion(containerOptions, containerResponses);
+        return this._scrapeQuestion(containerOptions, containerResponses);
     }
 
     /**
@@ -283,14 +283,14 @@ class CAPEReport {
      * @param {*} nQuestionText 
      * @returns 
      */
-    scrapeQuestionGroup(nChoiceText, nQuestionText) {
+    _scrapeQuestionGroup(nChoiceText, nQuestionText) {
         const idChoiceText = `ContentPlaceHolder1_dlQuestionnaire_trChoiceText_${nChoiceText}`;
         const idQuestionText = `ContentPlaceHolder1_dlQuestionnaire_tdQuestionText_${nQuestionText}`;
 
         const containerOptions = document.getElementById(idChoiceText);
         const containerResponses = document.getElementById(idQuestionText);
 
-        return this.scrapeQuestion(containerOptions, containerResponses);
+        return this._scrapeQuestion(containerOptions, containerResponses);
     }
 
     /**
@@ -299,7 +299,7 @@ class CAPEReport {
      * @param {*} eResponsesContainer 
      * @returns 
      */
-    scrapeQuestion(eOptionsContainer, eResponsesContainer) {
+    _scrapeQuestion(eOptionsContainer, eResponsesContainer) {
         const res = new Map();
 
         const re = /^(\d+)<br>(\d+%)<br>$/;
@@ -364,6 +364,27 @@ class SelfCAPE {
         data.set("recommendInstructor", this.scrapeRecommendInstructor());
 
         this.data = Object.fromEntries(data.entries());
+    }
+
+    _scrapeTableHeaders(cssTable, cssHeaders) {
+        return Array.from(document.querySelectorAll(`${cssTable} ${cssHeaders}`)).map(
+            (e) => e.innerText.trim()
+        );
+    }
+
+    _scrapeTablePrompt(cssTable, cssPrompt) {
+        return document.querySelector(`${cssTable} ${cssPrompt}`).innerText.trim();
+    }
+
+    _scrapeTableContent(cssTable, cssData, cssPercentages) {
+        const eData = document.querySelectorAll(`${cssTable} ${cssData}`);
+        const ePercentages = document.querySelectorAll(`${cssTable} ${cssPercentages}`);
+
+        const res = [];
+        for (let i = 0; i < (eData.length < ePercentages.length ? eData.length : ePercentages.length); ++i) {
+            res.push({n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()});
+        }
+        return res
     }
 
     scrapeClassLevel() {
@@ -456,12 +477,12 @@ class SelfCAPE {
 
         const headers = [
             "prompt",
-            ...this.scrapeTableHeaders(css.table, css.headers).slice(2, -2),
+            ...this._scrapeTableHeaders(css.table, css.headers).slice(2, -2),
             "n", "mean"
         ];
         const data = [
-            this.scrapeTablePrompt(css.table, css.prompt),
-            ...this.scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
             parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim()),
             parseFloat(document.querySelector(`${css.table} ${css.data}:nth-last-child(1)`).innerText.trim())
         ]
@@ -480,27 +501,6 @@ class SelfCAPE {
 
     scrapeRecommendInstructor() {
         const eTable = document.querySelector("table:nth-child(9)");
-    }
-
-    scrapeTableHeaders(cssTable, cssHeaders) {
-        return Array.from(document.querySelectorAll(`${cssTable} ${cssHeaders}`)).map(
-            (e) => e.innerText.trim()
-        );
-    }
-
-    scrapeTablePrompt(cssTable, cssPrompt) {
-        return document.querySelector(`${cssTable} ${cssPrompt}`).innerText.trim();
-    }
-
-    scrapeTableContent(cssTable, cssData, cssPercentages) {
-        const eData = document.querySelectorAll(`${cssTable} ${cssData}`);
-        const ePercentages = document.querySelectorAll(`${cssTable} ${cssPercentages}`);
-
-        const res = [];
-        for (let i = 0; i < (eData.length < ePercentages.length ? eData.length : ePercentages.length); ++i) {
-            res.push({n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()});
-        }
-        return res
     }
 }
 
