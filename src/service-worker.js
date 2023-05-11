@@ -34,7 +34,7 @@ function scrapeCAPEPage(tab) {
  * @returns 
  */
 function downloadCAPEData(payload) {
-    if (!payload.capeType) { return; }
+    if (!(payload && payload.capeType)) { return; }
 
     const dataURL = [
         "data:text/json;charset=utf-8",
