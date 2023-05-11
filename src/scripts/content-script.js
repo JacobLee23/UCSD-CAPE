@@ -490,7 +490,27 @@ class SelfCAPE {
     }
 
     scrapeAttendanceFrequency() {
-        const eTable = document.querySelector("table:nth-child(7)");
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(7)",
+            headers: "tr:nth-child(1) > td",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td",
+            percentages: "tr:nth-child(3) > td"
+        };
+
+        const headers = [
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(2, -2), "n"
+        ];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim())
+        ];
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
     }
 
     scrapeRecommendCourse() {
