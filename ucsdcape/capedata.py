@@ -30,7 +30,7 @@ class CAPEResults(_CAPEData):
     """
     """
     def __init__(self, path: typing.Union[str, pathlib.Path]):
-        super().__init__(path, "results")
+        super().__init__(path, "CAPEResults")
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(name='{self.name}', course_number='{self.course_number}')"
@@ -59,7 +59,7 @@ class CAPEReport(_CAPEData):
     """
     """
     def __init__(self, path: typing.Union[str, pathlib.Path]):
-        super().__init__(path, "report")
+        super().__init__(path, "CAPEReport")
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(section_id={self.section_id})"
@@ -69,3 +69,63 @@ class CAPEReport(_CAPEData):
         """
         """
         return self.capedata.get("sectionID")
+    
+    @property
+    def data(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.capedata.get("data")
+    
+    @property
+    def report_title(self) -> str:
+        """
+        """
+        return self.data.get("reportTitle")
+    
+    @property
+    def course_description(self) -> str:
+        """
+        """
+        return self.data.get("courseDescription")
+    
+    @property
+    def instructor(self) -> str:
+        """
+        """
+        return self.data.get("instructor")
+    
+    @property
+    def quarter(self) -> str:
+        """
+        """
+        return self.data.get("quarter")
+    
+    @property
+    def term(self) -> int:
+        """
+        """
+        return self.data.get("term")
+    
+    @property
+    def evaluations(self) -> int:
+        """
+        """
+        return self.data.get("evaluations")
+    
+    @property
+    def statistics(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
+        """
+        """
+        return self.data.get("statistics")
+    
+    @property
+    def grades(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
+        """
+        """
+        return self.data.get("grades")
+    
+    @property
+    def questionnaire(self) -> typing.List[typing.Dict[str, typing.Any]]:
+        """
+        """
+        return self.data.get("questionnaire")

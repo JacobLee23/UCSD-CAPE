@@ -133,7 +133,7 @@ class CAPEReport {
 
         data.set(
             "reportTitle",
-            document.getElementById("ContentPlaceHolder1_lblReportTitle")?.innerText
+            document.getElementById("ContentPlaceHolder1_lblReportTitle").innerText
         );
         data.set(
             "courseDescription",
@@ -144,7 +144,7 @@ class CAPEReport {
             document.getElementById("ContentPlaceHolder1_lblInstructorName").innerText
         );
         data.set(
-            "quarter",
+            "term",
             document.getElementById("ContentPlaceHolder1_lblTermCode").innerText
         );
         data.set(
