@@ -485,7 +485,7 @@ class SelfCAPE {
         };
 
         const headers = [
-            "prompt", ...this._scrapeTableHeaders(css.table, css.headers), "n", "expectedGPA"
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(0, -2), "n", "expectedGPA"
         ];
         const data = [
             this._scrapeTablePrompt(css.table, css.prompt),
