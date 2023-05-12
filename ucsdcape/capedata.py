@@ -113,13 +113,13 @@ class CAPEReport(_CAPEData):
         return self.data.get("evaluations")
     
     @property
-    def statistics(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
+    def statistics(self) -> typing.Dict[str, typing.Any]:
         """
         """
         return self.data.get("statistics")
     
     @property
-    def grades(self) -> typing.Dict[str, typing.Dict[str, typing.Any]]:
+    def grades(self) -> typing.Dict[str, typing.Any]:
         """
         """
         return self.data.get("grades")
@@ -129,3 +129,109 @@ class CAPEReport(_CAPEData):
         """
         """
         return self.data.get("questionnaire")
+
+
+class SelfCAPE(_CAPEData):
+    """
+    """
+    def __init__(self, path: typing.Union[str, pathlib.Path]):
+        super().__init__(path, "SelfCAPE")
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(section_id={self.section_id})"
+    
+    @property
+    def section_id(self) -> int:
+        """
+        """
+        return self.capedata.get("sectionID")
+    
+    @property
+    def data(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.capedata.get("data")
+
+    @property
+    def subject(self) -> str:
+        """
+        """
+        return self.data.get("subject")
+    
+    @property
+    def course_number(self) -> str:
+        """
+        """
+        return self.data.get("courseNumber")
+    
+    @property
+    def instructor(self) -> str:
+        """
+        """
+        return self.data.get("instructor")
+    
+    @property
+    def term(self) -> str:
+        """
+        """
+        return self.data.get("term")
+    
+    @property
+    def enrollment(self) -> int:
+        """
+        """
+        return self.data.get("enrollment")
+    
+    @property
+    def evaluations(self) -> int:
+        """
+        """
+        return self.data.get("evaluations")
+    
+    @property
+    def class_level(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.data.get("classLevel")
+    
+    @property
+    def enrollment_reason(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.data.get("enrollmentReason")
+    
+    @property
+    def expected_grade(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.data.get("expectedGrade")
+    
+    @property
+    def questionnaire(self) -> typing.List[typing.Dict[str, typing.Any]]:
+        """
+        """
+        return self.data.get("questionnaire")
+    
+    @property
+    def study_hours_per_week(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.data.get("studyHoursPerWeek")
+    
+    @property
+    def attendance_frequency(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.data.get("attendanceFrequency")
+    
+    @property
+    def recommend_course(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.data.get("recommendCourse")
+    
+    @property
+    def recommend_instructor(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.data.get("recommendInstructor")
