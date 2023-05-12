@@ -506,29 +506,24 @@ class SelfCAPE {
         const res = [];
 
         const eTable = document.querySelector("table:nth-child(5)");
-        const eRows = Array.from(
-            eTable.querySelectorAll("tr")).map((e) => Array.from(e.querySelectorAll("td"))
-        );
-        const eHeaders = eRows.shift();
+        const eHeaders = Array.from(eTable.querySelectorAll("tr:first-child > td"));
+        const eDataRows = Array.from(eTable.querySelectorAll("tr:first-child ~ tr:nth-child(even)"));
+        const ePercentageRows = Array.from(eTable.querySelectorAll("tr:first-child ~ tr:nth-child(odd)"));
 
-        const headers = eHeaders.slice(3, -3).map((e) => e.innerText.strip());
-        for (let i = 0; i < eRows.size; i += 2) {
-            const eData = eRows[i], ePercentages = eRows[i + 1];
-            const ePrompt = eRows[i].querySelector("td:nth-child(2)");
+        const headers = eHeaders.slice(3, -3).map((e) => e.innerText.trim());
+        for (let i = 0; i < eDataRows.length; ++i) {
+            const eData = Array.from(eDataRows[i].querySelectorAll("td")).slice(2);
+            const ePercentages = Array.from(ePercentageRows[i].querySelectorAll("td")).slice(3);
+            const ePrompt = eDataRows[i].querySelector("td:nth-child(2)");
 
             const data = new Map();
             data.set("prompt", ePrompt.innerText.trim());
-            data.set(headers[0], parseInt(eData[1].innerText.trim()));
-            headers.slice(1).forEach(
-                (x) => {
-                    data.set(
-                        x, {
-                            n: parseInt(eData[headers.indexOf(x) - 1].innerText.trim()),
-                            pct: ePercentages[headers.indexOf(x) - 1].innerText.trim()
-                        }
-                    )
-                }
-            );
+            data.set(headers[0], parseInt(eData[2].innerText.trim()));
+            for (let j = 1; j < headers.length; ++j) {
+                data.set(
+                    headers[j], {n: parseInt(eData[j].innerText.trim()), pct: ePercentages[j].innerText.trim()}
+                );
+            }
             data.set("n", parseInt(eData[eData.length - 3].innerText.trim()));
             data.set("mean", parseFloat(eData[eData.length - 2].innerText.trim()));
             data.set("std", parseFloat(eData[eData.length - 1].innerText.trim()));
