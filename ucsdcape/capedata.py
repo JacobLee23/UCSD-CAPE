@@ -19,10 +19,10 @@ class _CAPEData:
             )
         
         with open(self.path, "r", encoding="utf-8") as file:
-            self.data = dict(json.load(file))
+            self.capedata = dict(json.load(file))
 
         self.capetype = capetype
-        if self.data.get("capeType") != self.capetype:
+        if self.capedata.get("capeType") != self.capetype:
             raise ValueError
 
 
@@ -39,20 +39,20 @@ class CAPEResults(_CAPEData):
     def name(self) -> str:
         """
         """
-        return self.data.get("name")
+        return self.capedata.get("name")
     
     @property
     def course_number(self) -> str:
         """
         """
-        return self.data.get("courseNumber")
+        return self.capedata.get("courseNumber")
     
     @property
-    def results(self) -> pd.DataFrame:
+    def data(self) -> pd.DataFrame:
         """
         """
-        results = self.data.get("results")
-        return pd.DataFrame(columns=results[0], data=results[1:])
+        data = self.capedata.get("data")
+        return pd.DataFrame(columns=data[0], data=data[1:])
 
 
 class CAPEReport(_CAPEData):
@@ -68,4 +68,4 @@ class CAPEReport(_CAPEData):
     def section_id(self) -> int:
         """
         """
-        return self.data.get("sectionID")
+        return self.capedata.get("sectionID")
