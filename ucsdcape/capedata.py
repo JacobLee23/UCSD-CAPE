@@ -75,14 +75,14 @@ class CAPEResults(_CAPEData):
 class CAPEReport(_CAPEData):
     """
     """
-    class _GradeDistribution(typing.NamedTuple):
+    class GradeDistribution(typing.NamedTuple):
         """
         """
         average_grade: str
         gpa: float
         distribution: pd.DataFrame
 
-    class _ResponseDistribution(typing.NamedTuple):
+    class ResponseDistribution(typing.NamedTuple):
         """
         """
         prompt: str
@@ -149,33 +149,21 @@ class CAPEReport(_CAPEData):
     def grades(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("grades")
+        field_names = ("expected", "received")
+        _GradeDistributions = collections.namedtuple("GradeDistribution", field_names)
+
+        data = {}
+        for name in field_names:
+            grade_data = self.data["grades"][name]
+            distribution = self.GradeDistribution(
+                grade_data["avgGrade"], grade_data["gpa"], pd.DataFrame(grade_data["grades"]).transpose()
+            )
+            data.setdefault(name, distribution)
+
+        return _GradeDistributions(**data)
     
     @property
     def questionnaire(self) -> typing.List[typing.Dict[str, typing.Any]]:
-        """
-        """
-        return self.data.get("questionnaire")
-        
-    def grade_distributions(self) -> typing.Tuple[str, _GradeDistribution]:
-        """
-        """
-        field_names = ("expected", "received")
-        GradeDistributions = collections.namedtuple("GradeDistributions", field_names)
-
-        res = {}
-        for name in field_names:
-            grade_data = self.grades[name]
-            distribution = self._GradeDistribution(
-                grade_data["avgGrade"],
-                grade_data["gpa"],
-                pd.DataFrame(grade_data["grades"])
-            )
-            res.setdefault(name, distribution)
-
-        return GradeDistributions(**res)
-
-    def response_distributions(self) -> typing.Dict[str, pd.DataFrame]:
         """
         """
         field_names = (
@@ -188,25 +176,25 @@ class CAPEReport(_CAPEData):
             "concern_for_student_learning", "promotion_of_discussion", "instructor_accessability",
             "instructor_timeliness", "recommend_instructor"
         )
-        ResponseDistributions = collections.namedtuple("ResponseDistributions", field_names)
+        _ResponseDistributions = collections.namedtuple("ResponseDistributions", field_names)
 
         excluded_columns = ("prompt", "n", "mean", "std")
 
-        res = {}
+        data = {}
         for ind, name in enumerate(field_names):
             response_data = self.questionnaire[ind]
-            distribution = self._ResponseDistribution(
-                response_data["prompt"],
-                response_data["n"],
+            distribution = self.ResponseDistribution(
+                response_data["prompt"], response_data["n"],
                 np.nan if response_data["mean"] is None else response_data["mean"],
                 np.nan if response_data["std"] is None else response_data["std"],
                 pd.DataFrame(
                     {k: v for k, v in response_data.items() if k not in excluded_columns}
-                )
+                ).transpose()
             )
-            res.setdefault(name, distribution)
+            data.setdefault(name, distribution)
 
-        return ResponseDistributions(**res)
+        return _ResponseDistributions(**data)
+
 
 class SelfCAPE(_CAPEData):
     """
