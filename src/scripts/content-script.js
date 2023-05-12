@@ -331,9 +331,16 @@ class CAPEReport {
 }
 
 
+/**
+ * 
+ */
 class SelfCAPE {
     capeType = "SelfCAPE";
 
+    /**
+     * 
+     * @param {*} sectionID 
+     */
     constructor(sectionID) {
         this.sectionID = sectionID;
 
@@ -366,16 +373,35 @@ class SelfCAPE {
         this.data = Object.fromEntries(data.entries());
     }
 
+    /**
+     * 
+     * @param {*} cssTable 
+     * @param {*} cssHeaders 
+     * @returns 
+     */
     _scrapeTableHeaders(cssTable, cssHeaders) {
         return Array.from(document.querySelectorAll(`${cssTable} ${cssHeaders}`)).map(
             (e) => e.innerText.trim()
         );
     }
 
+    /**
+     * 
+     * @param {*} cssTable 
+     * @param {*} cssPrompt 
+     * @returns 
+     */
     _scrapeTablePrompt(cssTable, cssPrompt) {
         return document.querySelector(`${cssTable} ${cssPrompt}`).innerText.trim();
     }
 
+    /**
+     * 
+     * @param {*} cssTable 
+     * @param {*} cssData 
+     * @param {*} cssPercentages 
+     * @returns 
+     */
     _scrapeTableContent(cssTable, cssData, cssPercentages) {
         const eData = document.querySelectorAll(`${cssTable} ${cssData}`);
         const ePercentages = document.querySelectorAll(`${cssTable} ${cssPercentages}`);
@@ -387,6 +413,10 @@ class SelfCAPE {
         return res
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeClassLevel() {
         const res = new Map();
 
@@ -411,6 +441,10 @@ class SelfCAPE {
         return Object.fromEntries(res.entries());
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeEnrollmentReason() {
         const res = new Map();
 
@@ -435,6 +469,10 @@ class SelfCAPE {
         return Object.fromEntries(res.entries());
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeExpectedGrade() {
         const res = new Map();
 
@@ -460,6 +498,10 @@ class SelfCAPE {
         return Object.fromEntries(res.entries());
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeQuestionnaire() {
         const res = [];
 
@@ -497,6 +539,10 @@ class SelfCAPE {
         return res;
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeStudyHoursPerWeek() {
         const res = new Map();
 
@@ -522,6 +568,10 @@ class SelfCAPE {
         return Object.fromEntries(res.entries());
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeAttendanceFrequency() {
         const res = new Map();
 
@@ -546,6 +596,10 @@ class SelfCAPE {
         return Object.fromEntries(res.entries());
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeRecommendCourse() {
         const res = new Map();
 
@@ -567,6 +621,10 @@ class SelfCAPE {
         return Object.fromEntries(res.entries());
     }
 
+    /**
+     * 
+     * @returns 
+     */
     scrapeRecommendInstructor() {
         const res = new Map();
 
