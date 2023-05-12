@@ -24,6 +24,15 @@ class _CAPEData:
         self.capetype = capetype
         if self.capedata.get("capeType") != self.capetype:
             raise ValueError
+    
+    def __getitem__(self, key: str) -> typing.Any:
+        return self.data.get(key)
+
+    @property
+    def data(self) -> typing.Dict[str, typing.Any]:
+        """
+        """
+        return self.capedata.get("data")
 
 
 class CAPEResults(_CAPEData):
@@ -34,6 +43,12 @@ class CAPEResults(_CAPEData):
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(name='{self.name}', course_number='{self.course_number}')"
+
+    def __getitem__(self, key: str) -> typing.Optional[pd.Series]:
+        try:
+            return self.data.loc[:, key]
+        except KeyError:
+            return None
 
     @property
     def name(self) -> str:
@@ -69,12 +84,6 @@ class CAPEReport(_CAPEData):
         """
         """
         return self.capedata.get("sectionID")
-    
-    @property
-    def data(self) -> typing.Dict[str, typing.Any]:
-        """
-        """
-        return self.capedata.get("data")
     
     @property
     def report_title(self) -> str:
@@ -145,12 +154,6 @@ class SelfCAPE(_CAPEData):
         """
         """
         return self.capedata.get("sectionID")
-    
-    @property
-    def data(self) -> typing.Dict[str, typing.Any]:
-        """
-        """
-        return self.capedata.get("data")
 
     @property
     def subject(self) -> str:
