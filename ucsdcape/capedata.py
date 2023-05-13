@@ -6,7 +6,6 @@ import json
 import pathlib
 import typing
 
-import numpy as np
 import pandas as pd
 
 
@@ -19,14 +18,14 @@ class _CAPEData:
             raise ValueError(
                 f"expected .json file extension, got {self.path.suffix}"
             )
-        
+
         with open(self.path, "r", encoding="utf-8") as file:
             self.capedata = dict(json.load(file))
 
         self.capetype = capetype
         if self.capedata.get("capeType") != self.capetype:
             raise ValueError
-    
+
     def __getitem__(self, key: str) -> typing.Any:
         return self.data.get(key)
 
@@ -36,7 +35,11 @@ class _CAPEData:
         """
         return self.capedata.get("data")
 
-    def get_distribution(self, data: typing.Dict[str, typing.Any], field_names: typing.Sequence[str] = ("prompt", "n")):
+    def get_distribution(
+        self,
+        data: typing.Dict[str, typing.Any],
+        field_names: typing.Sequence[str] = ("prompt", "n")
+    ):
         """
         """
         Distribution = collections.namedtuple("Distribution", [*field_names, "distribution"])
@@ -71,13 +74,13 @@ class CAPEResults(_CAPEData):
         """
         """
         return self.capedata.get("name")
-    
+
     @property
     def course_number(self) -> str:
         """
         """
         return self.capedata.get("courseNumber")
-    
+
     @property
     def data(self) -> pd.DataFrame:
         """
@@ -100,49 +103,49 @@ class CAPEReport(_CAPEData):
         """
         """
         return self.capedata.get("sectionID")
-    
+
     @property
     def report_title(self) -> str:
         """
         """
         return self.data.get("reportTitle")
-    
+
     @property
     def course_description(self) -> str:
         """
         """
         return self.data.get("courseDescription")
-    
+
     @property
     def instructor(self) -> str:
         """
         """
         return self.data.get("instructor")
-    
+
     @property
     def term(self) -> int:
         """
         """
         return self.data.get("term")
-    
+
     @property
     def enrollment(self) -> int:
         """
         """
         return self.data.get("enrollment")
-    
+
     @property
     def evaluations(self) -> int:
         """
         """
         return self.data.get("evaluations")
-    
+
     @property
     def statistics(self) -> typing.Dict[str, typing.Any]:
         """
         """
         return self.data.get("statistics")
-    
+
     @property
     def grades(self) -> typing.Dict[str, typing.Any]:
         """
@@ -157,7 +160,7 @@ class CAPEReport(_CAPEData):
             data.setdefault(name, self.get_distribution(self.data["grades"][name], field_names))
 
         return GradeDistributions(**data)
-    
+
     @property
     def questionnaire(self) -> typing.List[typing.Dict[str, typing.Any]]:
         """
@@ -193,7 +196,7 @@ class SelfCAPE(_CAPEData):
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(section_id={self.section_id})"
-    
+
     @property
     def section_id(self) -> int:
         """
@@ -205,49 +208,49 @@ class SelfCAPE(_CAPEData):
         """
         """
         return self.data.get("subject")
-    
+
     @property
     def course_number(self) -> str:
         """
         """
         return self.data.get("courseNumber")
-    
+
     @property
     def instructor(self) -> str:
         """
         """
         return self.data.get("instructor")
-    
+
     @property
     def term(self) -> str:
         """
         """
         return self.data.get("term")
-    
+
     @property
     def enrollment(self) -> int:
         """
         """
         return self.data.get("enrollment")
-    
+
     @property
     def evaluations(self) -> int:
         """
         """
         return self.data.get("evaluations")
-    
+
     @property
     def class_level(self) -> typing.Dict[str, typing.Any]:
         """
         """
         return self.get_distribution(self.data["classLevel"])
-    
+
     @property
     def enrollment_reason(self) -> typing.Dict[str, typing.Any]:
         """
         """
         return self.get_distribution(self.data["enrollmentReason"])
-    
+
     @property
     def expected_grade(self) -> typing.Dict[str, typing.Any]:
         """
@@ -255,13 +258,13 @@ class SelfCAPE(_CAPEData):
         return self.get_distribution(
             self.data["expectedGrade"], ("prompt", "n", "expectedGPA")
         )
-    
+
     @property
     def questionnaire(self) -> typing.List[typing.Dict[str, typing.Any]]:
         """
         """
         return self.data.get("questionnaire")
-    
+
     @property
     def study_hours_per_week(self) -> typing.Dict[str, typing.Any]:
         """
@@ -269,19 +272,19 @@ class SelfCAPE(_CAPEData):
         return self.get_distribution(
             self.data["studyHoursPerWeek"], ("prompt", "n", "mean")
         )
-    
+
     @property
     def attendance_frequency(self) -> typing.Dict[str, typing.Any]:
         """
         """
         return self.get_distribution(self.data["attendanceFrequency"])
-    
+
     @property
     def recommend_course(self) -> typing.Dict[str, typing.Any]:
         """
         """
         return self.get_distribution(self.data["recommendCourse"])
-    
+
     @property
     def recommend_instructor(self) -> typing.Dict[str, typing.Any]:
         """
