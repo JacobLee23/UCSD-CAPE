@@ -203,45 +203,42 @@ class CAPEReport {
      * @returns 
      */
     scrapeGrades() {
+        const res = new Map();
+
         const grades = new Map();
         grades.set("expected", "ContentPlaceHolder1_pnlExpectedGrades");
         grades.set("received", "ContentPlaceHolder1_pnlGradesReceived");
 
-        const res = new Map();
-
         const re = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
 
-        let key, value;
-        let entries = Array.from(grades.entries());
+        const keys = Array.from(grades.keys()), values = Array.from(grades.values());
         for (let i = 0; i < grades.size; ++i) {
-            [key, value] = entries[i];
-
             const data = new Map();
 
-            const eGrade = document.getElementById(value);
-            const eHeader = eGrade.querySelector("h4 > span");
+            const eGrade = document.getElementById(values[i]);
             const eTable = eGrade.querySelector("table.styled");
-            const eTableHeader = Array.from(eTable.querySelectorAll("thead > tr:first-child > th"));
-            const eTableData = Array.from(eTable.querySelectorAll("tbody > tr")).map(
-                (element) => Array.from(element.querySelectorAll("td"))
+            const eHeaders = Array.from(eTable.querySelectorAll("thead > tr:first-child > th"));
+            const eDataRow = Array.from(eTable.querySelectorAll("tbody > tr:nth-child(2) > td"));
+            const ePercentageRow = Array.from(eTable.querySelectorAll("tbody > tr:nth-child(2) > td"));
+
+            const match = re.exec(eGrade.querySelector("h4 > span").innerHTML);
+            const headers = eHeaders.map((e) => e.innerText);
+            
+            data.set("avgGrade", match[1]);
+            data.set("gpa", parseFloat(match[2]));
+            headers.forEach(
+                (x) => {
+                    const index = headers.indexOf(x);
+                    data.set(
+                        x, {
+                            n: parseInt(eDataRow[index].innerText.trim()),
+                            pct: ePercentageRow[index].innerText.trim().split(" ").join("")
+                        }
+                    );
+                }
             );
 
-            const match = re.exec(eHeader.innerHTML);
-            data.set("avgGrade", match?.at(1));
-            data.set("gpa", parseFloat(match?.at(2)));
-
-            const tableHeaders = eTableHeader.map((element) => element.textContent);
-            const tableData = eTableData.map(
-                (a) => a.map((element) => element.textContent?.split(" ").join(""))
-            );
-
-            const gradeData = new Map();
-            for (let j = 0; j < tableHeaders.length; ++j) {
-                gradeData.set(tableHeaders[j], {n: parseInt(tableData[0][j]), pct: tableData[1][j]});
-            }
-            data.set("grades", Object.fromEntries(gradeData));
-
-            res.set(key, Object.fromEntries(data));
+            res.set(keys[i], Object.fromEntries(data));
         }
 
         return Object.fromEntries(res.entries());
