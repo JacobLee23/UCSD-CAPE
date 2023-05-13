@@ -12,11 +12,14 @@
 function scrapeCAPEPage(message, sender, sendResponse) {
     let payload;
     switch (message.type) {
-        case "results":
+        case "CAPEResults":
             payload = new CAPEResults(message.queryParameters.Name, message.queryParameters.CourseNumber);
             break;
-        case "report":
+        case "CAPEReport":
             payload = new CAPEReport(parseInt(message.queryParameters.sectionid));
+            break;
+        case "SelfCAPE":
+            payload = new SelfCAPE(parseInt(message.queryParameters.SectionId));
             break;
         default:
             payload = null;
@@ -30,7 +33,7 @@ function scrapeCAPEPage(message, sender, sendResponse) {
  * 
  */
 class CAPEResults {
-    capeType = "results";
+    capeType = "CAPEResults";
 
     /**
      * 
@@ -40,16 +43,16 @@ class CAPEResults {
     constructor(name, courseNumber) {
         this.name = name, this.courseNumber = courseNumber;
 
-        this.results = [];
+        this.data = [];
 
         const headers = [
-            "instructor", "course", "courseNumber", "sectionNumber", "reportURL",
-            "term", "quarter", "year", "enrollment", "evaluations",
-            "recdClass", "recdInstructor", "studyHoursPerWeek", "avgExpectedGrade", "expectedGPA",
-            "avgReceivedGrade", "receivedGPA"
+            "instructor", "course", "courseNumber", "sectionID", "reportURL",
+            "reportType", "term", "quarter", "year", "enrollment",
+            "evaluations", "recommendClass", "recommendInstructor", "studyHoursPerWeek", "avgExpectedGrade",
+            "expectedGPA", "avgReceivedGrade", "receivedGPA"
         ];
-        this.results.push(headers);
-        this.results.push(...this.scrapeRows());
+        this.data.push(headers);
+        this.data.push(...this.scrapeRows());
     }
 
     /**
@@ -57,28 +60,41 @@ class CAPEResults {
      * @returns 
      */
     scrapeRows() {
-        const elementTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
-        const elementRows = Array.from(elementTable.querySelectorAll("tbody > tr")).map(
+        const eTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
+        const eTableData = Array.from(eTable.querySelectorAll("tbody > tr")).map(
             (element) => Array.from(element.querySelectorAll("td"))
         );
 
         let reCourseNumber = /^(\w{3,4})\s(\d{1,3}\w{0,2})/;
         let reGrade = /^([ABCDF][+\-]?)\s\((\d+\.\d+)\)$/;
-        let reReportURL = /^CAPEReport\.aspx\?sectionid=(\d+)$/;
-        let reTerm = /^(FA|WI|SP|S1|S2)(\d+)$/;
+        let reReportURL = /^(CAPEReport\.aspx\?sectionid=(\d+)|\.\.\/(scripts\/detailedStats\.asp\?SectionId=(\d+)))$/;
+        let reTerm = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
 
         const res = [];
-        for (let i = 0; i < elementRows.length; ++i) {
-            const elements = elementRows[i];
+        for (let i = 0; i < eTableData.length; ++i) {
+            const elements = eTableData[i];
             const row = [];
 
-            const href = elements[1].querySelector("a")?.getAttribute("href");
+            const href = elements[1].querySelector("a").getAttribute("href");
+            const match = reReportURL.exec(href);
+            let sectionID = 0, reportType = "", url = "";
+            if (match?.at(2)) {
+                sectionID = parseInt(match[2]);
+                reportType = "CAPEReport";
+                url = `https://cape.ucsd.edu/${match[1]}`;
+            }
+            else if (match?.at(4)) {
+                sectionID = parseInt(match[4]);
+                reportType = "SelfCAPE";
+                url = `https://cape.ucsd.edu/${match[3]}`;
+            }
             
             row.push(elements[0].innerText?.trim());
             row.push(elements[1].innerText?.trim());
-            row.push(reCourseNumber.exec(elements[1].innerText?.trim())?.at(2));
-            row.push(parseInt(reReportURL.exec(href)?.at(1)));
-            row.push(`https://cape.ucsd.edu/${href}`);
+            row.push(reCourseNumber.exec(elements[1].innerText?.trim())?.at(0));
+            row.push(sectionID);
+            row.push(url);
+            row.push(reportType);
             row.push(elements[2].innerText?.trim());
             row.push(reTerm.exec(elements[2].innerText?.trim())?.at(1));
             row.push(parseInt(reTerm.exec(elements[2].innerText?.trim())?.at(2)));
@@ -104,7 +120,7 @@ class CAPEResults {
  * 
  */
 class CAPEReport {
-    capeType = "report";
+    capeType = "CAPEReport";
 
     /**
      * 
@@ -113,38 +129,38 @@ class CAPEReport {
     constructor(sectionID) {
         this.sectionID = sectionID;
 
-        const report = new Map();
+        const data = new Map();
 
-        report.set(
+        data.set(
             "reportTitle",
-            document.getElementById("ContentPlaceHolder1_lblReportTitle")?.innerText
+            document.getElementById("ContentPlaceHolder1_lblReportTitle").innerText
         );
-        report.set(
+        data.set(
             "courseDescription",
             document.getElementById("ContentPlaceHolder1_lblCourseDescription").innerText
         );
-        report.set(
+        data.set(
             "instructor",
             document.getElementById("ContentPlaceHolder1_lblInstructorName").innerText
         );
-        report.set(
-            "quarter",
+        data.set(
+            "term",
             document.getElementById("ContentPlaceHolder1_lblTermCode").innerText
         );
-        report.set(
+        data.set(
             "enrollment",
             parseInt(document.getElementById("ContentPlaceHolder1_lblEnrollment").innerText)
         );
-        report.set(
+        data.set(
             "evaluations",
             parseInt(document.getElementById("ContentPlaceHolder1_lblEvaluationsSubmitted").innerText)
         );
 
-        report.set("statistics", this.scrapeStatistics());
-        report.set("grades", this.scrapeGrades());
-        report.set("questionnaire", this.scrapeQuestionnaire());
+        data.set("statistics", this.scrapeStatistics());
+        data.set("grades", this.scrapeGrades());
+        data.set("questionnaire", this.scrapeQuestionnaire());
 
-        this.report = Object.fromEntries(report.entries());
+        this.data = Object.fromEntries(data.entries());
     }
     
     /**
@@ -154,42 +170,30 @@ class CAPEReport {
     scrapeStatistics() {
         const res = new Map();
 
-        const elementTable = document.getElementById("ContentPlaceHolder1_tblStatistics");
-        const elementTData = Array.from(
-            elementTable.querySelectorAll("tbody > tr:first-child > td > span")
-        );
+        const eTable = document.getElementById("ContentPlaceHolder1_tblStatistics");
+        const eTableData = Array.from(eTable.querySelectorAll("tbody > tr:first-child > td > span"));
 
-        const reGrade = /^(\d+)\s(\d+%)$/;
-        const reResponse = /(\d+\.\d+)\s\((.*)\)/;
-        let match;
+        let re, match;
+
+        re = /^(\d+)\s(\d+%)$/;
 
         // "Recommend the instructor"
-        match = reGrade.exec(elementTData[0].innerText.trim());
-        res.set(
-            "recdInstructor",
-            {n: parseInt(match[1]), pct: match[2]}
-        );
+        match = re.exec(eTableData[0].innerText.trim());
+        res.set("recommendInstructor", {n: parseInt(match[1]), pct: match[2]});
 
         // "Recommend the course"
-        match = reGrade.exec(elementTData[1].innerText.trim());
-        res.set(
-            "recdCourse",
-            {n: parseInt(match[1]), pct: match[2]}
-        );
+        match = re.exec(eTableData[1].innerText.trim());
+        res.set("recommendCourse", {n: parseInt(match[1]), pct: match[2]});
+
+        re = /(\d+\.\d+)\s\((.*)\)/;
 
         // "Exams represent the course material"
-        match = reResponse.exec(elementTData[2].innerText.trim());
-        res.set(
-            "examsRepresentCourseMaterial",
-            {avgRating: parseFloat(match[1]), avgResponse: match[2]}
-        );
+        match = re.exec(eTableData[2].innerText.trim());
+        res.set("examsRepresentCourseMaterial", {avgRating: parseFloat(match[1]), avgResponse: match[2]});
 
         // "Instructor is clear and audible"
-        match = reResponse.exec(elementTData[3].innerText.trim());
-        res.set(
-            "instructorClearAndAudible",
-            {avgRating: parseFloat(match[1]), avgResponse: match[2]}
-        );
+        match = re.exec(eTableData[3].innerText.trim());
+        res.set("instructorClearAndAudible", {avgRating: parseFloat(match[1]), avgResponse: match[2]});
 
         return Object.fromEntries(res.entries());
     }
@@ -199,45 +203,42 @@ class CAPEReport {
      * @returns 
      */
     scrapeGrades() {
+        const res = new Map();
+
         const grades = new Map();
         grades.set("expected", "ContentPlaceHolder1_pnlExpectedGrades");
         grades.set("received", "ContentPlaceHolder1_pnlGradesReceived");
 
-        const res = new Map();
+        const re = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
 
-        const reAverageGrade = /^([ABCDF][+\-]?)\saverage\s\((\d+\.\d+)\)$/;
-
-        let key, value;
-        let entries = Array.from(grades.entries());
+        const keys = Array.from(grades.keys()), values = Array.from(grades.values());
         for (let i = 0; i < grades.size; ++i) {
-            [key, value] = entries[i];
-
             const data = new Map();
 
-            const elementGrade = document.getElementById(value);
-            const elementHeader = elementGrade.querySelector("h4 > span");
-            const elementTable = elementGrade.querySelector("table.styled");
-            const elementTHeader = Array.from(elementTable.querySelectorAll("thead > tr:first-child > th"));
-            const elementTData = Array.from(elementTable.querySelectorAll("tbody > tr")).map(
-                (element) => Array.from(element.querySelectorAll("td"))
+            const eGrade = document.getElementById(values[i]);
+            const eTable = eGrade.querySelector("table.styled");
+            const eHeaders = Array.from(eTable.querySelectorAll("thead > tr:first-child > th"));
+            const eDataRow = Array.from(eTable.querySelectorAll("tbody > tr:nth-child(2) > td"));
+            const ePercentageRow = Array.from(eTable.querySelectorAll("tbody > tr:nth-child(2) > td"));
+
+            const match = re.exec(eGrade.querySelector("h4 > span").innerHTML);
+            const headers = eHeaders.map((e) => e.innerText);
+            
+            data.set("avgGrade", match[1]);
+            data.set("gpa", parseFloat(match[2]));
+            headers.forEach(
+                (x) => {
+                    const index = headers.indexOf(x);
+                    data.set(
+                        x, {
+                            n: parseInt(eDataRow[index].innerText.trim()),
+                            pct: ePercentageRow[index].innerText.trim().split(" ").join("")
+                        }
+                    );
+                }
             );
 
-            const match = reAverageGrade.exec(elementHeader.innerHTML);
-            data.set("avgGrade", match?.at(1));
-            data.set("gpa", parseFloat(match?.at(2)));
-
-            const theaders = elementTHeader.map((element) => element.textContent);
-            const tdata = elementTData.map(
-                (a) => a.map((element) => element.textContent?.split(" ").join(""))
-            );
-
-            const gradeData = new Map();
-            for (let j = 0; j < theaders.length; ++j) {
-                gradeData.set(theaders[j], {n: parseInt(tdata[0][j]), pct: tdata[1][j]});
-            }
-            data.set("grades", Object.fromEntries(gradeData));
-
-            res.set(key, Object.fromEntries(data));
+            res.set(keys[i], Object.fromEntries(data));
         }
 
         return Object.fromEntries(res.entries());
@@ -249,12 +250,12 @@ class CAPEReport {
      */
     scrapeQuestionnaire() {
         return [
-            ...Array.from(Array(3).keys()).map((x) => x + 1).map((x) => this.scrapeIndividualQuestion(x)),
-            ...Array.from(Array(3).keys()).map((x) => x + 5).map((x) => this.scrapeIndividualQuestion(x)),
-            ...Array.from(Array(5).keys()).map((x) => x + 9).map((x) => this.scrapeQuestionGroup(9, x)),
-            this.scrapeIndividualQuestion(14),
-            ...Array.from(Array(10).keys()).map((x) => x + 16).map((x) => this.scrapeQuestionGroup(16, x)),
-            this.scrapeIndividualQuestion(28)
+            ...Array.from(Array(3).keys()).map((x) => x + 1).map((x) => this._scrapeIndividualQuestion(x)),
+            ...Array.from(Array(3).keys()).map((x) => x + 5).map((x) => this._scrapeIndividualQuestion(x)),
+            ...Array.from(Array(5).keys()).map((x) => x + 9).map((x) => this._scrapeQuestionGroup(9, x)),
+            this._scrapeIndividualQuestion(14),
+            ...Array.from(Array(10).keys()).map((x) => x + 16).map((x) => this._scrapeQuestionGroup(16, x)),
+            this._scrapeIndividualQuestion(28)
         ];
     }
 
@@ -263,14 +264,14 @@ class CAPEReport {
      * @param {*} nChoiceText 
      * @returns 
      */
-    scrapeIndividualQuestion(nChoiceText) {
+    _scrapeIndividualQuestion(nChoiceText) {
         const idChoiceText = `ContentPlaceHolder1_dlQuestionnaire_trChoiceText_${nChoiceText}`;
         const idQuestionText = `ContentPlaceHolder1_dlQuestionnaire_tdQuestionText_${nChoiceText}`;
         
         const containerOptions = document.getElementById(idChoiceText);
         const containerResponses = document.getElementById(idQuestionText);
         
-        return this.scrapeQuestion(containerOptions, containerResponses);
+        return this._scrapeQuestion(containerOptions, containerResponses);
     }
 
     /**
@@ -279,51 +280,362 @@ class CAPEReport {
      * @param {*} nQuestionText 
      * @returns 
      */
-    scrapeQuestionGroup(nChoiceText, nQuestionText) {
+    _scrapeQuestionGroup(nChoiceText, nQuestionText) {
         const idChoiceText = `ContentPlaceHolder1_dlQuestionnaire_trChoiceText_${nChoiceText}`;
         const idQuestionText = `ContentPlaceHolder1_dlQuestionnaire_tdQuestionText_${nQuestionText}`;
 
         const containerOptions = document.getElementById(idChoiceText);
         const containerResponses = document.getElementById(idQuestionText);
 
-        return this.scrapeQuestion(containerOptions, containerResponses);
+        return this._scrapeQuestion(containerOptions, containerResponses);
     }
 
     /**
      * 
-     * @param {*} containerOptions 
-     * @param {*} containerResponses 
+     * @param {*} eOptionsContainer 
+     * @param {*} eResponsesContainer 
      * @returns 
      */
-    scrapeQuestion(containerOptions, containerResponses) {
+    _scrapeQuestion(eOptionsContainer, eResponsesContainer) {
         const res = new Map();
 
-        const reGrade = /^(\d+)<br>(\d+%)<br>$/;
+        const re = /^(\d+)<br>(\d+%)<br>$/;
 
-        const elementOptions = Array.from(containerOptions.querySelectorAll("td")).slice(1);
-        const elementResponses = Array.from(containerResponses.parentElement.querySelectorAll("td span")).slice(1);
-        const textOptions = elementOptions.map((element) => element.innerText.trim());
-        const textResponses = elementResponses.map((element) => element.innerText.trim());
+        const eOptions = Array.from(eOptionsContainer.querySelectorAll("td")).slice(1);
+        const eResponses = Array.from(eResponsesContainer.parentElement.querySelectorAll("td span")).slice(1);
 
-        const options = ["prompt", ...textOptions.slice(0, -3), "n", "mean", "std"];
-        const responses = [];
-
-        responses.push(textResponses[0]);
-        responses.push
-        responses.push(
-            ...Array.from(elementResponses).slice(1, -3).map(
+        const options = [
+            "prompt",
+            ...eOptions.slice(0, -3).map((e) => (e.innerText.trim())),
+            "n", "mean", "std"
+        ];
+        const responses = [
+            eResponses[0].innerText.trim(),
+            ...eResponses.slice(1, -3).map(
                 (e) => {
-                    const match = reGrade.exec(e.innerHTML);
+                    const match = re.exec(e.innerHTML);
                     return {n: parseInt(match[1]), pct: match[2]};
                 }
-            )
-        )
-        responses.push(parseInt(textResponses.at(-3)));
-        responses.push(parseFloat((textResponses.at(-2))));
-        responses.push(parseFloat((textResponses.at(-1))));
+            ),
+            parseInt(eResponses.at(-3).innerText.trim()),
+            parseFloat(eResponses.at(-2).innerText.trim()),
+            parseFloat(eResponses.at(-1).innerText.trim())
+        ];
 
         options.forEach((x) => { res.set(x, responses[options.indexOf(x)]); });
         return Object.fromEntries(res);
+    }
+}
+
+
+/**
+ * 
+ */
+class SelfCAPE {
+    capeType = "SelfCAPE";
+
+    /**
+     * 
+     * @param {*} sectionID 
+     */
+    constructor(sectionID) {
+        this.sectionID = sectionID;
+
+        const data = new Map();
+
+        const re = /\d+$/;
+        const eTable = document.querySelector("table:nth-child(1)");
+        data.set("subject", eTable.querySelector("tbody > tr:first-child > td:nth-child(1)").innerText.trim());
+        data.set("courseNumber", eTable.querySelector("tbody > tr:first-child > td:nth-child(2)").innerText.trim());
+        data.set("instructor", eTable.querySelector("tbody > tr:first-child > td:nth-child(4)").innerText.trim());
+        data.set("term", eTable.querySelector("tbody > tr:first-child > td:nth-child(5)").innerText.trim());
+        data.set(
+            "enrollment",
+            parseInt(re.exec(eTable.querySelector("tbody > tr:last-child > td:nth-child(4)").innerText.trim())?.at(0))
+        );
+        data.set(
+            "evaluations",
+            parseInt(re.exec(eTable.querySelector("tbody > tr:last-child > td:nth-child(5)").innerText.trim())?.at(0))
+        )
+
+        data.set("classLevel", this.scrapeClassLevel());
+        data.set("enrollmentReason", this.scrapeEnrollmentReason());
+        data.set("expectedGrade", this.scrapeExpectedGrade());
+        data.set("questionnaire", this.scrapeQuestionnaire());
+        data.set("studyHoursPerWeek", this.scrapeStudyHoursPerWeek());
+        data.set("attendanceFrequency", this.scrapeAttendanceFrequency());
+        data.set("recommendCourse", this.scrapeRecommendCourse());
+        data.set("recommendInstructor", this.scrapeRecommendInstructor());
+
+        this.data = Object.fromEntries(data.entries());
+    }
+
+    /**
+     * 
+     * @param {*} cssTable 
+     * @param {*} cssHeaders 
+     * @returns 
+     */
+    _scrapeTableHeaders(cssTable, cssHeaders) {
+        return Array.from(document.querySelectorAll(`${cssTable} ${cssHeaders}`)).map(
+            (e) => e.innerText.trim()
+        );
+    }
+
+    /**
+     * 
+     * @param {*} cssTable 
+     * @param {*} cssPrompt 
+     * @returns 
+     */
+    _scrapeTablePrompt(cssTable, cssPrompt) {
+        return document.querySelector(`${cssTable} ${cssPrompt}`).innerText.trim();
+    }
+
+    /**
+     * 
+     * @param {*} cssTable 
+     * @param {*} cssData 
+     * @param {*} cssPercentages 
+     * @returns 
+     */
+    _scrapeTableContent(cssTable, cssData, cssPercentages) {
+        const eData = document.querySelectorAll(`${cssTable} ${cssData}`);
+        const ePercentages = document.querySelectorAll(`${cssTable} ${cssPercentages}`);
+
+        const res = [];
+        for (let i = 0; i < (eData.length < ePercentages.length ? eData.length : ePercentages.length); ++i) {
+            res.push({n: parseInt(eData[i].innerText.trim()), pct: ePercentages[i].innerText.trim()});
+        }
+        return res
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeClassLevel() {
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(2)",
+            headers: "tr:nth-child(1) > th",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td",
+            percentages: "tr:nth-child(3) > td"
+        };
+
+        const headers = [
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(0, -1), "n"
+        ];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(3, -1),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(1)`).innerText.trim())
+        ];
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeEnrollmentReason() {
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(3)",
+            headers: "tr:nth-child(1) > th",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td:nth-child(2) ~ td",
+            percentages: "tr:nth-child(3) > td:nth-child(3) ~ td"
+        };
+
+        const headers = [
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(0, -2), "n"
+        ];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(0, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(1)`).innerText.trim()),
+        ];
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeExpectedGrade() {
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(4)",
+            headers: "tr:nth-child(1) > th",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td:nth-child(2) ~ td",
+            percentages: "tr:nth-child(3) > td:nth-child(3) ~ td"
+        };
+
+        const headers = [
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(0, -2), "n", "expectedGPA"
+        ];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(0, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim()),
+            parseFloat(document.querySelector(`${css.table} ${css.data}:nth-last-child(1)`).innerText.trim())
+        ];
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeQuestionnaire() {
+        const res = [];
+
+        const eTable = document.querySelector("table:nth-child(5)");
+        const eHeaders = Array.from(eTable.querySelectorAll("tr:first-child > td"));
+        const eDataRows = Array.from(eTable.querySelectorAll("tr:first-child ~ tr:nth-child(even)"));
+        const ePercentageRows = Array.from(eTable.querySelectorAll("tr:first-child ~ tr:nth-child(odd)"));
+
+        const headers = eHeaders.slice(3, -3).map((e) => e.innerText.trim());
+        for (let i = 0; i < eDataRows.length; ++i) {
+            const eData = Array.from(eDataRows[i].querySelectorAll("td")).slice(2);
+            const ePercentages = Array.from(ePercentageRows[i].querySelectorAll("td")).slice(3);
+            const ePrompt = eDataRows[i].querySelector("td:nth-child(2)");
+
+            const data = new Map();
+            data.set("prompt", ePrompt.innerText.trim());
+            data.set(headers[0], parseInt(eData[2].innerText.trim()));
+            for (let j = 1; j < headers.length; ++j) {
+                data.set(
+                    headers[j], {n: parseInt(eData[j].innerText.trim()), pct: ePercentages[j].innerText.trim()}
+                );
+            }
+            data.set("n", parseInt(eData[eData.length - 3].innerText.trim()));
+            data.set("mean", parseFloat(eData[eData.length - 2].innerText.trim()));
+            data.set("std", parseFloat(eData[eData.length - 1].innerText.trim()));
+
+            res.push(Object.fromEntries(data.entries()));
+        }
+
+        return res;
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeStudyHoursPerWeek() {
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(6)",
+            headers: "tr:nth-child(1) > td",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td",
+            percentages: "tr:nth-child(3) > td"
+        };
+
+        const headers = [
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(2, -2), "n", "mean"
+        ];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim()),
+            parseFloat(document.querySelector(`${css.table} ${css.data}:nth-last-child(1)`).innerText.trim())
+        ]
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeAttendanceFrequency() {
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(7)",
+            headers: "tr:nth-child(1) > td",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td",
+            percentages: "tr:nth-child(3) > td"
+        };
+
+        const headers = [
+            "prompt", ...this._scrapeTableHeaders(css.table, css.headers).slice(2, -2), "n"
+        ];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim())
+        ];
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeRecommendCourse() {
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(8)",
+            prompt: "tr:nth-child(2) > td:nth-child(2)",
+            data: "tr:nth-child(2) > td",
+            percentages: "tr:nth-child(3) > td"
+        };
+
+        const headers = ["prompt", "No", "Yes", "n"];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim())
+        ];
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    scrapeRecommendInstructor() {
+        const res = new Map();
+
+        const css = {
+            table: "table:nth-child(9)",
+            prompt: "tr:nth-child(1) > td:nth-child(2)",
+            data: "tr:nth-child(1) > td",
+            percentages: "tr:nth-child(2) > td"
+        };
+
+        const headers = ["prompt", "No", "Yes", "n"];
+        const data = [
+            this._scrapeTablePrompt(css.table, css.prompt),
+            ...this._scrapeTableContent(css.table, css.data, css.percentages).slice(2, -2),
+            parseInt(document.querySelector(`${css.table} ${css.data}:nth-last-child(2)`).innerText.trim())
+        ];
+
+        headers.forEach((x) => { res.set(x, data[headers.indexOf(x)]); });
+        return Object.fromEntries(res.entries());
     }
 }
 

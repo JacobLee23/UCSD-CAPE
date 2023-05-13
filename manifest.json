@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UCSD CAPE Scraper",
-  "version": "0.2.0",
+  "version": "0.3.0",
 
   "action": {
     "default_icon": {
@@ -30,7 +30,8 @@
       ],
       "matches": [
         "https://cape.ucsd.edu/responses/Results.aspx*",
-        "https://cape.ucsd.edu/responses/CAPEReport.aspx*"
+        "https://cape.ucsd.edu/responses/CAPEReport.aspx*",
+        "https://cape.ucsd.edu/scripts/detailedStats.asp*"
       ]
     }
   ],
