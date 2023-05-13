@@ -36,6 +36,20 @@ class _CAPEData:
         """
         return self.capedata.get("data")
 
+    def get_distribution(self, data: typing.Dict[str, typing.Any], field_names: typing.Sequence[str] = ("prompt", "n")):
+        """
+        """
+        Distribution = collections.namedtuple("Distribution", [*field_names, "distribution"])
+
+        distribution = Distribution(
+            **{k: data[k] for k in field_names},
+            distribution=pd.DataFrame(
+                {k: v for k, v in data.items() if k not in field_names}
+            ).transpose()
+        )
+
+        return distribution
+
 
 class CAPEResults(_CAPEData):
     """
@@ -75,22 +89,6 @@ class CAPEResults(_CAPEData):
 class CAPEReport(_CAPEData):
     """
     """
-    class GradeDistribution(typing.NamedTuple):
-        """
-        """
-        average_grade: str
-        gpa: float
-        distribution: pd.DataFrame
-
-    class ResponseDistribution(typing.NamedTuple):
-        """
-        """
-        prompt: str
-        n: int
-        mean: float
-        std: float
-        distribution: pd.DataFrame
-
     def __init__(self, path: typing.Union[str, pathlib.Path]):
         super().__init__(path, "CAPEReport")
 
@@ -149,25 +147,23 @@ class CAPEReport(_CAPEData):
     def grades(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        field_names = ("expected", "received")
-        _GradeDistributions = collections.namedtuple("GradeDistribution", field_names)
+        distribution_names = ("expected", "received")
+        GradeDistributions = collections.namedtuple("GradeDistributions", distribution_names)
+
+        field_names = ("avgGrade", "gpa")
 
         data = {}
-        for name in field_names:
-            grade_data = self.data["grades"][name]
-            distribution = self.GradeDistribution(
-                grade_data["avgGrade"], grade_data["gpa"], pd.DataFrame(grade_data["grades"]).transpose()
-            )
-            data.setdefault(name, distribution)
+        for name in distribution_names:
+            data.setdefault(name, self.get_distribution(self.data["grades"][name], field_names))
 
-        return _GradeDistributions(**data)
+        return GradeDistributions(**data)
     
     @property
     def questionnaire(self) -> typing.List[typing.Dict[str, typing.Any]]:
         """
         """
-        field_names = (
-            "class_levels", "enrollment_reasons", "expected_grades",
+        distribution_names = (
+            "class_level", "enrollment_reason", "expected_grade",
             "degree_of_learning", "study_hours_per_week", "attendance_frequency",
             "intellectually_stimulating", "promotion_of_learning", "usefulness_of_reading",
             "relative_difficulty", "exam_representativeness", "recommend_course",
@@ -176,24 +172,17 @@ class CAPEReport(_CAPEData):
             "concern_for_student_learning", "promotion_of_discussion", "instructor_accessability",
             "instructor_timeliness", "recommend_instructor"
         )
-        _ResponseDistributions = collections.namedtuple("ResponseDistributions", field_names)
+        ResponseDistributions = collections.namedtuple("ResponseDistributions", distribution_names)
 
-        excluded_columns = ("prompt", "n", "mean", "std")
+        field_names = ("prompt", "n", "mean", "std")
 
         data = {}
-        for ind, name in enumerate(field_names):
-            response_data = self.questionnaire[ind]
-            distribution = self.ResponseDistribution(
-                response_data["prompt"], response_data["n"],
-                np.nan if response_data["mean"] is None else response_data["mean"],
-                np.nan if response_data["std"] is None else response_data["std"],
-                pd.DataFrame(
-                    {k: v for k, v in response_data.items() if k not in excluded_columns}
-                ).transpose()
+        for ind, name in enumerate(distribution_names):
+            data.setdefault(
+                name, self.get_distribution(self.data["questionnaire"][ind], field_names)
             )
-            data.setdefault(name, distribution)
 
-        return _ResponseDistributions(**data)
+        return ResponseDistributions(**data)
 
 
 class SelfCAPE(_CAPEData):
@@ -251,19 +240,21 @@ class SelfCAPE(_CAPEData):
     def class_level(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("classLevel")
+        return self.get_distribution(self.data["classLevel"])
     
     @property
     def enrollment_reason(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("enrollmentReason")
+        return self.get_distribution(self.data["enrollmentReason"])
     
     @property
     def expected_grade(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("expectedGrade")
+        return self.get_distribution(
+            self.data["expectedGrade"], ("prompt", "n", "expectedGPA")
+        )
     
     @property
     def questionnaire(self) -> typing.List[typing.Dict[str, typing.Any]]:
@@ -275,22 +266,24 @@ class SelfCAPE(_CAPEData):
     def study_hours_per_week(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("studyHoursPerWeek")
+        return self.get_distribution(
+            self.data["studyHoursPerWeek"], ("prompt", "n", "mean")
+        )
     
     @property
     def attendance_frequency(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("attendanceFrequency")
+        return self.get_distribution(self.data["attendanceFrequency"])
     
     @property
     def recommend_course(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("recommendCourse")
+        return self.get_distribution(self.data["recommendCourse"])
     
     @property
     def recommend_instructor(self) -> typing.Dict[str, typing.Any]:
         """
         """
-        return self.data.get("recommendInstructor")
+        return self.get_distribution(self.data["recommendInstructor"])
