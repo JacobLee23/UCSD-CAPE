@@ -1,0 +1,19 @@
+{
+  "name": "ucsd-cape",
+  "version": "0.3.0",
+  "description": "Web scraper for the UCSD Course and Professor Evaluations (CAPE) website.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JacobLee23/UCSD-CAPE.git"
+  },
+  "author": "Jacob Lee",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JacobLee23/UCSD-CAPE/issues"
+  },
+  "homepage": "https://github.com/JacobLee23/UCSD-CAPE#readme"
+}
