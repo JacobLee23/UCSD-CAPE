@@ -22,7 +22,7 @@ function scrapeCAPEPage(message, sender, sendResponse) {
             payload = new SelfCAPE(parseInt(message.queryParameters.SectionId));
             break;
         default:
-            payload = null;
+            return;
     }
 
     sendResponse(payload);

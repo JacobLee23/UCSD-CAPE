@@ -26,7 +26,8 @@
   "content_scripts": [
     {
       "js": [
-        "src/scripts/cape-scraper.js"
+        "src/scripts/cape-scraper.js",
+        "src/scripts/results-filters.js"
       ],
       "matches": [
         "https://cape.ucsd.edu/responses/Results.aspx*",
@@ -41,7 +42,8 @@
   ],
   "permissions": [
     "activeTab",
-    "downloads"
+    "downloads",
+    "tabs"
   ],
   "short_name": "UCSD CAPE"
 }

@@ -9,6 +9,27 @@
 class CAPEPage {
     /**
      * 
+     * @param {*} tabId 
+     * @param {*} changeInfo 
+     * @param {*} tab 
+     * @returns 
+     */
+    static insertFilters(tabId, changeInfo, tab) {
+        if (!tab.url || !tab.url.includes("Results.aspx")) { return; }
+
+        const queryParameters = new URLSearchParams(tab.url.split("?")[1]);
+
+        const message = new Map();
+        message.set("queryParameters", Object.fromEntries(queryParameters.entries()));
+        message.set("url", tab.url);
+        message.set("type", "filters");
+
+        const data = Object.fromEntries(message);
+        chrome.tabs.sendMessage(tab.id, data);
+    }
+
+    /**
+     * 
      * @param {*} tab 
      * @returns 
      */
@@ -67,3 +88,4 @@ class CAPEPage {
 
 
 chrome.action.onClicked.addListener(CAPEPage.scrape);
+chrome.tabs.onUpdated.addListener(CAPEPage.insertFilters);
