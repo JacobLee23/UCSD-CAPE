@@ -26,7 +26,7 @@
   "content_scripts": [
     {
       "js": [
-        "src/scripts/content-script.js"
+        "src/scripts/cape-scraper.js"
       ],
       "matches": [
         "https://cape.ucsd.edu/responses/Results.aspx*",
