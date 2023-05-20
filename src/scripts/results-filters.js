@@ -187,17 +187,7 @@ class CAPEResultsFilters {
         this.queryParameters = { name: name, courseNumber: courseNumber };
 
         this.table = new CAPEResultsTable();
-    }
-
-    /**
-     * 
-     */
-    get form() {
-        const form = document.createElement("form");
-        form.classList.add("cape-results-filters");
-        form.setAttribute("name", "cape-results-filters");
-
-        const formFields = [
+        this.formFields = [
             this.instructor,
             this.courseNumber,
             this.quarter,
@@ -209,8 +199,18 @@ class CAPEResultsFilters {
             // this.studyHoursPerWeek,
             this.averageExpectedGrade,
             this.averageReceivedGrade
-        ]
-        formFields.forEach((e) => { form.appendChild(e) });
+        ];
+    }
+
+    /**
+     * 
+     */
+    get form() {
+        const form = document.createElement("form");
+        form.setAttribute("id", "cape-results-filters")
+        form.setAttribute("name", "cape-results-filters");
+
+        this.formFields.forEach((e) => { form.appendChild(e) });
 
         const inputSubmit = document.createElement("input");
         inputSubmit.setAttribute("type", "submit");
@@ -308,8 +308,58 @@ class CAPEResultsFilters {
         legend.append(span);
 
         legend.appendChild(this._fieldToggleButton(name));
+        legend.appendChild(this._fieldSelectAllButton(name));
 
         return legend;
+    }
+
+    _fieldControlButton() {
+        const button = document.createElement("button");
+
+        button.classList.add("field-control");
+        button.setAttribute("type", "button");
+        button.setAttribute("onmouseover", "style='text-decoration: underline'");
+        button.setAttribute("onmouseout", "style='text-decoration: none'");
+
+        return button;
+    }
+
+    _fieldSelectAllButton(name) {
+        const button = this._fieldControlButton();
+
+        button.classList.add("field-select-all");
+        button.addEventListener(
+            "click",
+            () => {
+                const options = Array.from(
+                    document.querySelectorAll(
+                        `fieldset[name='${name}'] > table > tr.filter-field > div.field-option > input[type='checkbox']`
+                    )
+                );
+                const element = document.querySelector(
+                    `fieldset[name='${name}'] > legend > button.field-select-all`
+                );
+                if (options.map((e) => e.checked).some((x) => !Boolean(x))) {
+                    options.forEach(
+                        (e) => {
+                            if (!e.checked) { e.click() };
+                            element.innerText = "De-Select All";
+                        }
+                    );
+                } else {
+                    options.forEach(
+                        (e) => {
+                            if (e.checked) { e.click(); }
+                            element.innerText = "Select All";
+                        }
+                    );
+                }
+            }
+        );
+
+        button.innerText = "Select All";
+
+        return button;
     }
 
     /**
@@ -318,26 +368,22 @@ class CAPEResultsFilters {
      * @returns 
      */
     _fieldToggleButton(name) {
-        const span = document.createElement("span");
-        span.classList.add("toggle-field");
+        const button = this._fieldControlButton();
 
-        const button = document.createElement("button");
-        button.setAttribute("type", "button");
-        button.setAttribute("onmouseover", "style='text-decoration: underline'");
-        button.setAttribute("onmouseout", "style='text-decoration: none'")
+        button.classList.add("toggle-field");
         button.addEventListener(
             "click",
             () => {
-                const element = document.querySelector(`fieldset[name='${name}'] > table > tr.filter-field`);
-                const isVisible = (!element.style.visibility || element.style.visibility === "visible");
-                element.style.visibility = (isVisible ? "collapse" : "visible");
+                const tr = document.querySelector(`fieldset[name='${name}'] > table > tr.filter-field`);
+                const button = document.querySelector(`fieldset[name='${name}'] > legend > button.field-select-all`);
+                const isVisible = (!tr.style.visibility || tr.style.visibility === "visible");
+                tr.style.visibility = (isVisible ? "collapse" : "visible");
+                button.style.visibility = (isVisible ? "hidden" : "visible");
             }
-        )
+        );
         button.innerText = "(Hide/Show Field)";
 
-        span.appendChild(button);
-
-        return span;
+        return button;
     }
 
     /**
@@ -379,6 +425,20 @@ class CAPEResultsFilters {
     insertForm() {
         const eTable = document.getElementById("ContentPlaceHolder1_UpdatePanel1").querySelector("div.field");
         eTable.insertAdjacentElement("afterend", this.form);
+
+        this.formFields.forEach(
+            (e) => {
+                const options = e.querySelectorAll(
+                    "table > tr.filter-field > div.field-option > input[type='checkbox']"
+                );
+                const button = e.querySelector(
+                    "legend > button.field-select-all"
+                );
+                button.innerText = (
+                    Array.from(options).map((e) => e.checked).some((x) => !Boolean(x)) ? "Select All": "De-Select All"
+                );
+            }
+        );
     }
 }
 

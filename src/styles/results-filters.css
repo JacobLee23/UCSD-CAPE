@@ -1,51 +1,52 @@
-form.cape-results-filters {
+form#cape-results-filters {
     border: 1px solid gray;
     padding: 25px;
 }
 
-form.cape-results-filters > fieldset > legend > span.field-name {
+form#cape-results-filters > fieldset > legend > span.field-name {
     float: left;
 }
 
-form.cape-results-filters > fieldset > legend > span.toggle-field {
+form#cape-results-filters > fieldset > legend > button.field-control {
+    background: none;
+    border: none;
     float: right;
     text-align: right;
     font-size: 15px;
 }
 
-form.cape-results-filters > fieldset > legend > span.toggle-field > button {
-    background: none;
-    border: none;
+form#cape-results-filters > fieldset > legend > button.field-select-all {
+    float: right;
 }
 
-form.cape-results-filters > fieldset > table {
+form#cape-results-filters > fieldset > table {
     width: 100%;
 }
 
-form.cape-results-filters > fieldset > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset > table > tr.filter-field > div.field-option {
     display: inline-block;
 }
 
-form.cape-results-filters > fieldset[name='instructor'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='instructor'] > table > tr.filter-field > div.field-option {
     width: 20%;
 }
 
-form.cape-results-filters > fieldset[name='course-number'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='course-number'] > table > tr.filter-field > div.field-option {
     width: 10%;
 }
 
-form.cape-results-filters > fieldset[name='quarter'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='quarter'] > table > tr.filter-field > div.field-option {
     width: 5%;
 }
 
-form.cape-results-filters > fieldset[name='year'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='year'] > table > tr.filter-field > div.field-option {
     width: 10%;
 }
 
-form.cape-results-filters > fieldset[name='average-expected-grade'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='average-expected-grade'] > table > tr.filter-field > div.field-option {
     width: 5%;
 }
 
-form.cape-results-filters fieldset[name='average-received-grade'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters fieldset[name='average-received-grade'] > table > tr.filter-field > div.field-option {
     width: 5%;
 }
