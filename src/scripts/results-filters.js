@@ -184,7 +184,7 @@ class CAPEResultsFilters {
      * @param {*} courseNumber 
      */
     constructor(name, courseNumber) {
-        this.name = name, this.courseNumber = courseNumber;
+        this.queryParameters = { name: name, courseNumber: courseNumber };
 
         this.table = new CAPEResultsTable();
     }
@@ -222,9 +222,9 @@ class CAPEResultsFilters {
     get instructor() {
         const element = this._fieldset("instructor", this.table.instructor);
 
-        if (this.name) {
+        if (this.queryParameters.name) {
             element.querySelector(
-                `input#instructor-${this.table.instructor.indexOf(this.name)}`
+                `input#instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
             ).click();
         }
 
@@ -237,9 +237,9 @@ class CAPEResultsFilters {
     get courseNumber() {
         const element = this._fieldset("course-number", this.table.courseNumber);
 
-        if (this.courseNumber) {
+        if (this.queryParameters.courseNumber) {
             element.querySelector(
-                `input#course-number-${this.table.courseNumber.indexOf(this.courseNumber)}`
+                `input#course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
             ).click();
         }
 
@@ -288,7 +288,7 @@ class CAPEResultsFilters {
 
         values.forEach(
             (x) => {
-                const i = value.indexOf(x);
+                const i = values.indexOf(x);
                 const id = `${name}-${i}`;
 
                 const div = document.createElement("div");
@@ -304,7 +304,7 @@ class CAPEResultsFilters {
                 label.innerText = x;
                 div.appendChild(label);
 
-                element.appendChidl(div);
+                element.appendChild(div);
             }
         );
 
