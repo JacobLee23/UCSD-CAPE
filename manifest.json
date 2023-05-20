@@ -25,6 +25,9 @@
   },
   "content_scripts": [
     {
+      "css": [
+        "src/styles/results-filters.css"
+      ],
       "js": [
         "src/scripts/cape-scraper.js",
         "src/scripts/results-filters.js"

@@ -193,57 +193,66 @@ class CAPEResultsFilters {
      * 
      */
     get form() {
-        const element = document.createElement("form");
-        element.setAttribute("name", "cape-results-filters");
+        const form = document.createElement("form");
+        form.classList.add("cape-results-filters");
+        form.setAttribute("name", "cape-results-filters");
 
-        element.appendChild(this.instructor);
-        element.appendChild(this.courseNumber);
-        element.appendChild(this.quarter);
-        element.appendChild(this.year);
-        element.appendChild(this.averageExpectedGrade);
-        element.appendChild(this.averageReceivedGrade);
+        const formFields = [
+            this.instructor,
+            this.courseNumber,
+            this.quarter,
+            this.year,
+            // this.enrollment,
+            // this.evaluations,
+            // this.recommendClass,
+            // this.recommendInstructor,
+            // this.studyHoursPerWeek,
+            this.averageExpectedGrade,
+            this.averageReceivedGrade
+        ]
+        formFields.forEach((e) => { form.appendChild(e) });
 
         const inputSubmit = document.createElement("input");
         inputSubmit.setAttribute("type", "submit");
         inputSubmit.setAttribute("value", "Filter Results");
-        element.appendChild(inputSubmit);
+        form.appendChild(inputSubmit);
 
         const inputReset = document.createElement("input");
         inputReset.setAttribute("type", "reset");
         inputReset.setAttribute("value", "Reset Form");
-        element.appendChild(inputReset);
+        form.appendChild(inputReset);
 
-        return element;
+        return form;
     }
 
     /**
      * 
      */
     get instructor() {
-        const element = this._fieldset("instructor", this.table.instructor);
+        const fieldset = this._fieldset("instructor", this.table.instructor);
 
         if (this.queryParameters.name) {
-            element.querySelector(
+            fieldset.querySelector(
                 `input#instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
             ).click();
         }
 
-        return element;
+        return fieldset;
     }
 
     /**
      * 
      */
     get courseNumber() {
-        const element = this._fieldset("course-number", this.table.courseNumber);
+        const fieldset = this._fieldset("course-number", this.table.courseNumber);
 
         if (this.queryParameters.courseNumber) {
-            element.querySelector(
+            fieldset.querySelector(
                 `input#course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
             ).click();
         }
 
-        return element;
+        return fieldset;
     }
 
     /**
@@ -277,46 +286,99 @@ class CAPEResultsFilters {
      * @returns 
      */
     _fieldset(name, values) {
-        const element = document.createElement("fieldset");
-        element.setAttribute("name", name);
+        const fieldset = document.createElement("fieldset");
+        fieldset.setAttribute("name", name);
+        fieldset.appendChild(this._fieldLegend(name));
 
+        const table = document.createElement("table");
+        table.appendChild(this._fieldCheckboxes(name, values));
+        fieldset.appendChild(table);
+
+        return fieldset;
+    }
+
+    _fieldLegend(name) {
         const legend = document.createElement("legend");
-        legend.innerText = name.split("-").map(
+
+        const span = document.createElement("span");
+        span.classList.add("field-name");
+        span.innerText = name.split("-").map(
             (s) => s[0].toUpperCase().concat(s.slice(1).toLowerCase())
         ).join(" ");
-        element.appendChild(legend);
+        legend.append(span);
 
-        values.forEach(
-            (x) => {
-                const i = values.indexOf(x);
-                const id = `${name}-${i}`;
+        legend.appendChild(this._fieldToggleButton(name));
 
-                const div = document.createElement("div");
+        return legend;
+    }
 
-                const input = document.createElement("input");
-                input.setAttribute("type", "checkbox");
-                input.setAttribute("id", id);
-                input.setAttribute("value", String(i));
-                div.appendChild(input);
+    /**
+     * 
+     * @param {*} name 
+     * @returns 
+     */
+    _fieldToggleButton(name) {
+        const span = document.createElement("span");
+        span.classList.add("toggle-field");
 
-                const label = document.createElement("label");
-                label.setAttribute("for", id);
-                label.innerText = x;
-                div.appendChild(label);
-
-                element.appendChild(div);
+        const button = document.createElement("button");
+        button.setAttribute("type", "button");
+        button.setAttribute("onmouseover", "style='text-decoration: underline'");
+        button.setAttribute("onmouseout", "style='text-decoration: none'")
+        button.addEventListener(
+            "click",
+            () => {
+                const element = document.querySelector(`fieldset[name='${name}'] > table > tr.filter-field`);
+                const isVisible = (!element.style.visibility || element.style.visibility === "visible");
+                element.style.visibility = (isVisible ? "collapse" : "visible");
             }
-        );
+        )
+        button.innerText = "(Hide/Show Field)";
 
-        return element;
+        span.appendChild(button);
+
+        return span;
+    }
+
+    /**
+     * 
+     * @param {*} name 
+     * @param {*} values 
+     * @returns 
+     */
+    _fieldCheckboxes(name, values) {
+        const tr = document.createElement("tr");
+        tr.classList.add("filter-field")
+
+        for (let i = 0; i < values.length; ++i) {
+            const id = `${name}-${i}`;
+
+            const div = document.createElement("div");
+            div.classList.add("field-option");
+
+            const input = document.createElement("input");
+            input.setAttribute("type", "checkbox");
+            input.setAttribute("id", id);
+            input.setAttribute("value", String(i));
+            div.appendChild(input);
+
+            const label = document.createElement("label");
+            label.setAttribute("for", id);
+            label.innerText = values[i];
+            div.appendChild(label);
+
+            tr.appendChild(div);
+        }
+
+        return tr;
     }
 
     /**
      * 
      */
     insertForm() {
-        const eTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
-        eTable.insertAdjacentElement("beforebegin", this.form);
+        const eTable = document.getElementById("ContentPlaceHolder1_UpdatePanel1").querySelector("div.field");
+        eTable.insertAdjacentElement("afterend", this.form);
     }
 }
 
