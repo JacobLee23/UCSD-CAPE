@@ -208,7 +208,7 @@ class CAPEResultsFilters {
         inputSubmit.setAttribute("value", "Filter Results");
         element.appendChild(inputSubmit);
 
-        const inputReset = document.createElement("reset");
+        const inputReset = document.createElement("input");
         inputReset.setAttribute("type", "reset");
         inputReset.setAttribute("value", "Reset Form");
         element.appendChild(inputReset);
