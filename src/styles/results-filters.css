@@ -47,6 +47,6 @@ form#cape-results-filters > fieldset[name='average-expected-grade'] > table > tr
     width: 5%;
 }
 
-form#cape-results-filters fieldset[name='average-received-grade'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='average-received-grade'] > table > tr.filter-field > div.field-option {
     width: 5%;
 }

@@ -18,10 +18,13 @@ function insertCAPEResultsFilters(message, sender, sendResponse) {
  * @param {*} increment 
  * @returns 
  */
-function adjustToMultiple(x, n, increment = true) {
+function _adjustToMultiple(x, n, increment = true) {
     while (x % n != 0) { x += (increment ? 1 : -1); }
     return x;
 }
+
+
+function _uniqueValues(array) { return Array.from(new Set(array)).sort(); }
 
 
 /**
@@ -31,9 +34,110 @@ class CAPEResultsTable {
     /**
      * 
      */
-    constructor() {
-        this.eTable = document.getElementById("ContentPlaceHolder1_gvCAPEs");
+    get eTable() {
+        return document.getElementById("ContentPlaceHolder1_gvCAPEs");
     }
+
+    /**
+     * 
+     */
+    get instructor() {
+        return _uniqueValues(this._scrapeTableColumn(1).map((e) => e.innerText.trim()));
+    }
+
+    /**
+     * 
+     */
+    get courseNumber() {
+        const re = /^(\w{3,4})\s(\d{1,3}\w{0,2})/;
+        return _uniqueValues(this._scrapeTableColumn(2).map((e) => re.exec(e.innerText.trim())[0]));
+    }
+
+    /**
+     * 
+     */
+    get quarter() {
+        const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
+        return _uniqueValues(this._scrapeTableColumn(3).map((e) => re.exec(e.innerText.trim())[1]));
+    }
+
+    /**
+     * 
+     */
+    get year() {
+        const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
+        return _uniqueValues(this._scrapeTableColumn(3).map((e) => re.exec(e.innerText.trim())[2])).map(
+            (x) => 2000 + parseInt(x)
+        );
+    }
+
+    /**
+     * 
+     */
+    get yearRange() {
+        return [
+            _adjustToMultiple(Math.min(this.year), 5, false),
+            _adjustToMultiple(Math.max(this.year), 5, true)
+        ];
+    }
+
+    /**
+     * 
+     */
+    get enrollment() {
+        let values = _uniqueValues(this._scrapeTableColumn(4).map((e) => parseInt(e.innerText.trim())));
+        return [0, _adjustToMultiple(Math.max(values), 25)];
+    }
+
+    /**
+     * 
+     */
+    get evaluations() {
+        let values = _uniqueValues(this._scrapeTableColumn(5).map((e) => parseInt(e.innerText.trim())));
+        return [0, _adjustToMultiple(Math.max(values), 25)];
+    }
+
+    /**
+     * 
+     */
+    get recommendClass() { return [0, 100]; }
+
+    /**
+     * 
+     */
+    get recommendInstructor() { return [0, 100]; }
+
+    /**
+     * 
+     */
+    get studyHoursPerWeek() {
+        let values = _uniqueValues(this._scrapeTableColumn(6).map((e) => parseFloat(e.innerText.trim())));
+        return [0, _adjustToMultiple(Math.ceil(Math.max(values)), 5)];
+    }
+
+    /**
+     * 
+     */
+    get averageExpectedGrade() {
+        return ["A", "B", "C", "D", "F"].map((a) => ["+", "", "-"].map((b) => a.concat(b))).flat();
+    }
+
+    /**
+     * 
+     */
+    get averageExpectedGradeRange() { return [0, 4]; }
+
+    /**
+     * 
+     */
+    get averageReceivedGrade() {
+        return ["A", "B", "C", "D", "F"].map((a) => ["+", "", "-"].map((b) => a.concat(b))).flat();
+    }
+
+    /**
+     * 
+     */
+    get averageReceivedGradeRange() { return [0, 4]; }
 
     /**
      * 
@@ -45,132 +149,6 @@ class CAPEResultsTable {
             this.eTable.querySelectorAll(`tbody > tr > td:nth-child(${ncolumn})`)
         );
     }
-
-    /**
-     * 
-     * @param {*} array 
-     * @returns 
-     */
-    _columnValues(array) { return Array.from(new Set(array)).sort(); }
-
-    /**
-     * 
-     * @returns 
-     */
-    _gradeOptions() {
-        const res = [];
-        Array.from("ABCDF").forEach((a) => res.push(...["+", "", "-"].map((b) => a.concat(b))));
-        return res;
-    }
-
-    /**
-     * 
-     * @returns 
-     */
-    _gpaRange() { return [0, 4]; }
-
-    /**
-     * 
-     * @returns 
-     */
-    _percentageRange() { return [0, 100]; }
-
-    /**
-     * 
-     */
-    get instructor() {
-        return this._columnValues(this._scrapeTableColumn(1).map((e) => e.innerText.trim()));
-    }
-
-    /**
-     * 
-     */
-    get courseNumber() {
-        const re = /^(\w{3,4})\s(\d{1,3}\w{0,2})/;
-        return this._columnValues(this._scrapeTableColumn(2).map((e) => re.exec(e.innerText.trim())[0]));
-    }
-
-    /**
-     * 
-     */
-    get quarter() {
-        const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
-        return this._columnValues(this._scrapeTableColumn(3).map((e) => re.exec(e.innerText.trim())[1]));
-    }
-
-    /**
-     * 
-     */
-    get year() {
-        const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
-        return this._columnValues(this._scrapeTableColumn(3).map((e) => re.exec(e.innerText.trim())[2])).map(
-            (x) => 2000 + parseInt(x)
-        );
-    }
-
-    /**
-     * 
-     */
-    get yearRange() {
-        return [
-            adjustToMultiple(Math.min(this.year), 5, false),
-            adjustToMultiple(Math.max(this.year), 5, true)
-        ];
-    }
-
-    /**
-     * 
-     */
-    get enrollmentRange() {
-        let values = this._columnValues(this._scrapeTableColumn(4).map((e) => parseInt(e.innerText.trim())));
-        return [0, adjustToMultiple(Math.max(values), 25)];
-    }
-
-    /**
-     * 
-     */
-    get evaluationsRange() {
-        let values = this._columnValues(this._scrapeTableColumn(5).map((e) => parseInt(e.innerText.trim())));
-        return [0, adjustToMultiple(Math.max(values), 25)];
-    }
-
-    /**
-     * 
-     */
-    get recommendClass() { return this._percentageRange(); }
-
-    /**
-     * 
-     */
-    get recommendInstructor() { return this._percentageInstructor(); }
-
-    /**
-     * 
-     */
-    get studyHoursPerWeek() {
-        let values = this._columnValues(this._scrapeTableColumn(6).map((e) => parseFloat(e.innerText.trim())));
-        return [0, adjustToMultiple(Math.ceil(Math.max(values)), 5)];
-    }
-
-    /**
-     * 
-     */
-    get averageExpectedGrade() { return this._gradeOptions(); }
-
-    /**
-     * 
-     */
-    get averageExpectedGradeRange() { return this._gpaRange(); }
-
-    /**
-     * 
-     */
-    get averageReceivedGrade() { return this._gradeOptions(); }
-
-    /**
-     * 
-     */
-    get averageReceivedGradeRange() { return this._gpaRange(); }
 }
 
 
@@ -187,6 +165,7 @@ class CAPEResultsFilters {
         this.queryParameters = { name: name, courseNumber: courseNumber };
 
         this.table = new CAPEResultsTable();
+        
         this.formFields = [
             this.instructor,
             this.courseNumber,
@@ -222,6 +201,8 @@ class CAPEResultsFilters {
         inputReset.setAttribute("value", "Reset Form");
         form.appendChild(inputReset);
 
+        form.addEventListener("submit", (e) => { CAPEResultsFilters.formData(e); });
+
         return form;
     }
 
@@ -232,9 +213,11 @@ class CAPEResultsFilters {
         const fieldset = this._fieldset("instructor", this.table.instructor);
 
         if (this.queryParameters.name) {
-            fieldset.querySelector(
+            const element = fieldset.querySelector(
                 `input#instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
-            ).click();
+            );
+            Array.from(fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
+            element.click();
         }
 
         return fieldset;
@@ -247,9 +230,11 @@ class CAPEResultsFilters {
         const fieldset = this._fieldset("course-number", this.table.courseNumber);
 
         if (this.queryParameters.courseNumber) {
-            fieldset.querySelector(
+            const element = fieldset.querySelector(
                 `input#course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
-            ).click();
+            );
+            Array.from(fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
+            element.click();
         }
 
         return fieldset;
@@ -297,6 +282,11 @@ class CAPEResultsFilters {
         return fieldset;
     }
 
+    /**
+     * 
+     * @param {*} name 
+     * @returns 
+     */
     _fieldLegend(name) {
         const legend = document.createElement("legend");
 
@@ -313,6 +303,10 @@ class CAPEResultsFilters {
         return legend;
     }
 
+    /**
+     * 
+     * @returns 
+     */
     _fieldControlButton() {
         const button = document.createElement("button");
 
@@ -324,6 +318,11 @@ class CAPEResultsFilters {
         return button;
     }
 
+    /**
+     * 
+     * @param {*} name 
+     * @returns 
+     */
     _fieldSelectAllButton(name) {
         const button = this._fieldControlButton();
 
@@ -406,6 +405,7 @@ class CAPEResultsFilters {
             input.setAttribute("type", "checkbox");
             input.setAttribute("id", id);
             input.setAttribute("value", String(i));
+            input.click();
             div.appendChild(input);
 
             const label = document.createElement("label");
@@ -423,6 +423,8 @@ class CAPEResultsFilters {
      * 
      */
     insertForm() {
+        this.removeForm();
+
         const eTable = document.getElementById("ContentPlaceHolder1_UpdatePanel1").querySelector("div.field");
         eTable.insertAdjacentElement("afterend", this.form);
 
@@ -439,6 +441,42 @@ class CAPEResultsFilters {
                 );
             }
         );
+    }
+
+    removeForm() {
+        const form = document.getElementById("cape-results-filters");
+        if (form) { form.remove() }
+    }
+
+    /**
+     * 
+     * @param {*} event 
+     */
+    static formData(event) {
+        event.preventDefault();
+
+        const data = new Map();
+        const checkboxFields = [
+            "instructor", "course-number", "quarter", "year", "averageExpectedGrade",
+            "averageReceivedGrade"
+        ];
+
+        checkboxFields.forEach(
+            (x) => {
+                const fieldData = new Map();
+                const elements = Array.from(
+                    document.querySelectorAll(
+                        `form#cape-results-filters > fieldset[name='${x}'] input[type='checkbox']`
+                    )
+                );
+                elements.forEach(
+                    (e) => { fieldData.set(e.nextSibling.innerText.trim(), e.checked); }
+                );
+                data.set(x, fieldData);
+            }
+        );
+
+        return Object.fromEntries(data);
     }
 }
 
