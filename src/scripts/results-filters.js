@@ -66,18 +66,12 @@ class CAPEResultsTable {
      */
     get year() {
         const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
-        return _uniqueValues(this._scrapeTableColumn(3).map((e) => re.exec(e.innerText.trim())[2])).map(
-            (x) => 2000 + parseInt(x)
+        const values = _uniqueValues(this._scrapeTableColumn(3).map(
+            (e) => parseInt(re.exec(e.innerText.trim())[2])) + 2000
         );
-    }
-
-    /**
-     * 
-     */
-    get yearRange() {
         return [
-            _adjustToMultiple(Math.min(this.year), 5, false),
-            _adjustToMultiple(Math.max(this.year), 5, true)
+            _adjustToMultiple(Math.min(values), 5, false),
+            _adjustToMultiple(Math.max(values), 5, true)
         ];
     }
 
@@ -118,26 +112,12 @@ class CAPEResultsTable {
     /**
      * 
      */
-    get averageExpectedGrade() {
-        return ["A", "B", "C", "D", "F"].map((a) => ["+", "", "-"].map((b) => a.concat(b))).flat();
-    }
+    get averageExpectedGrade() { return [0, 4]; }
 
     /**
      * 
      */
-    get averageExpectedGradeRange() { return [0, 4]; }
-
-    /**
-     * 
-     */
-    get averageReceivedGrade() {
-        return ["A", "B", "C", "D", "F"].map((a) => ["+", "", "-"].map((b) => a.concat(b))).flat();
-    }
-
-    /**
-     * 
-     */
-    get averageReceivedGradeRange() { return [0, 4]; }
+    get averageReceivedGrade() { return [0, 4]; }
 
     /**
      * 
@@ -170,14 +150,14 @@ class CAPEResultsFilters {
             this.instructor,
             this.courseNumber,
             this.quarter,
-            this.year,
+            // this.year,
             // this.enrollment,
             // this.evaluations,
             // this.recommendClass,
             // this.recommendInstructor,
             // this.studyHoursPerWeek,
-            this.averageExpectedGrade,
-            this.averageReceivedGrade
+            // this.averageExpectedGrade,
+            // this.averageReceivedGrade
         ];
     }
 
@@ -201,7 +181,8 @@ class CAPEResultsFilters {
         inputReset.setAttribute("value", "Reset Form");
         form.appendChild(inputReset);
 
-        form.addEventListener("submit", (e) => { CAPEResultsFilters.formData(e); });
+        form.addEventListener("submit", CAPEResultsFilters.formData);
+        console.log(form);
 
         return form;
     }
@@ -247,25 +228,6 @@ class CAPEResultsFilters {
 
     /**
      * 
-     */
-    get year() { return this._fieldset("year", this.table.year); }
-
-    /**
-     * 
-     */
-    get averageExpectedGrade() {
-        return this._fieldset("average-expected-grade", this.table.averageExpectedGrade);
-    }
-
-    /**
-     * 
-     */
-    get averageReceivedGrade() {
-        return this._fieldset("average-received-grade", this.table.averageReceivedGrade);
-    }
-
-    /**
-     * 
      * @param {*} name 
      * @param {*} values 
      * @returns 
@@ -273,10 +235,10 @@ class CAPEResultsFilters {
     _fieldset(name, values) {
         const fieldset = document.createElement("fieldset");
         fieldset.setAttribute("name", name);
-        fieldset.appendChild(this._fieldLegend(name));
+        fieldset.appendChild(this._fieldsetLegend(name));
 
         const table = document.createElement("table");
-        table.appendChild(this._fieldCheckboxes(name, values));
+        table.appendChild(this._fieldsetCheckbox(name, values));
         fieldset.appendChild(table);
 
         return fieldset;
@@ -287,7 +249,7 @@ class CAPEResultsFilters {
      * @param {*} name 
      * @returns 
      */
-    _fieldLegend(name) {
+    _fieldsetLegend(name) {
         const legend = document.createElement("legend");
 
         const span = document.createElement("span");
@@ -297,8 +259,8 @@ class CAPEResultsFilters {
         ).join(" ");
         legend.append(span);
 
-        legend.appendChild(this._fieldToggleButton(name));
-        legend.appendChild(this._fieldSelectAllButton(name));
+        legend.appendChild(this._fieldsetToggleButton(name));
+        legend.appendChild(this._fieldsetSelectAllButton(name));
 
         return legend;
     }
@@ -307,7 +269,7 @@ class CAPEResultsFilters {
      * 
      * @returns 
      */
-    _fieldControlButton() {
+    _fieldsetButton() {
         const button = document.createElement("button");
 
         button.classList.add("field-control");
@@ -323,8 +285,8 @@ class CAPEResultsFilters {
      * @param {*} name 
      * @returns 
      */
-    _fieldSelectAllButton(name) {
-        const button = this._fieldControlButton();
+    _fieldsetSelectAllButton(name) {
+        const button = this._fieldsetButton();
 
         button.classList.add("field-select-all");
         button.addEventListener(
@@ -366,8 +328,8 @@ class CAPEResultsFilters {
      * @param {*} name 
      * @returns 
      */
-    _fieldToggleButton(name) {
-        const button = this._fieldControlButton();
+    _fieldsetToggleButton(name) {
+        const button = this._fieldsetButton();
 
         button.classList.add("toggle-field");
         button.addEventListener(
@@ -391,7 +353,7 @@ class CAPEResultsFilters {
      * @param {*} values 
      * @returns 
      */
-    _fieldCheckboxes(name, values) {
+    _fieldsetCheckbox(name, values) {
         const tr = document.createElement("tr");
         tr.classList.add("filter-field")
 
@@ -457,8 +419,7 @@ class CAPEResultsFilters {
 
         const data = new Map();
         const checkboxFields = [
-            "instructor", "course-number", "quarter", "year", "averageExpectedGrade",
-            "averageReceivedGrade"
+            "instructor", "course-number", "quarter"
         ];
 
         checkboxFields.forEach(
