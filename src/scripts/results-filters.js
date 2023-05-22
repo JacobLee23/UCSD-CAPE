@@ -610,17 +610,17 @@ class _InputRange extends _Fieldset {
                 const id = `${this.name}-${x}`;
 
                 const div = document.createElement("div");
-                // div.classList.add();
+                div.classList.add("field-range");
+
+                const label = document.createElement("label");
+                label.setAttribute("for", id);
+                label.innerText = x[0].toUpperCase().concat(x.slice(1).toLowerCase());
+                div.appendChild(label);
 
                 const input = document.createElement("input");
                 input.setAttribute("type", "range");
                 input.setAttribute("id", id);
                 div.appendChild(input);
-
-                const label = document.createElement("label");
-                label.setAttribute("for", id);
-                label.innerText = (x === "min" ? "Minimum" : "Maximum");
-                div.appendChild(label);
 
                 tr.appendChild(div);
             }

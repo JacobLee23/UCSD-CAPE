@@ -50,3 +50,9 @@ form#cape-results-filters > fieldset[name='average-expected-grade'] > table > tr
 form#cape-results-filters > fieldset[name='average-received-grade'] > table > tr.filter-field > div.field-option {
     width: 5%;
 }
+
+form#cape-results-filters > fieldset > table > tr.filter-field > div.field-range {
+    display: inline-grid;
+    width: 40%;
+    margin: 0% 5%;
+}
