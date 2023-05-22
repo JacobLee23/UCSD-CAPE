@@ -66,12 +66,14 @@ class CAPEResultsTable {
      */
     get year() {
         const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
-        const values = _uniqueValues(this._scrapeTableColumn(3).map(
-            (e) => parseInt(re.exec(e.innerText.trim())[2])) + 2000
+        const values = _uniqueValues(
+            this._scrapeTableColumn(3).map(
+                (e) => parseInt(re.exec(e.innerText.trim())[2]) + 2000
+            )
         );
         return [
-            _adjustToMultiple(Math.min(values), 5, false),
-            _adjustToMultiple(Math.max(values), 5, true)
+            _adjustToMultiple(Math.min(...values), 5, false),
+            _adjustToMultiple(Math.max(...values), 5, true)
         ];
     }
 
@@ -80,7 +82,7 @@ class CAPEResultsTable {
      */
     get enrollment() {
         let values = _uniqueValues(this._scrapeTableColumn(4).map((e) => parseInt(e.innerText.trim())));
-        return [0, _adjustToMultiple(Math.max(values), 25)];
+        return [0, _adjustToMultiple(Math.max(...values), 25)];
     }
 
     /**
@@ -88,7 +90,7 @@ class CAPEResultsTable {
      */
     get evaluations() {
         let values = _uniqueValues(this._scrapeTableColumn(5).map((e) => parseInt(e.innerText.trim())));
-        return [0, _adjustToMultiple(Math.max(values), 25)];
+        return [0, _adjustToMultiple(Math.max(...values), 25)];
     }
 
     /**
@@ -106,7 +108,7 @@ class CAPEResultsTable {
      */
     get studyHoursPerWeek() {
         let values = _uniqueValues(this._scrapeTableColumn(6).map((e) => parseFloat(e.innerText.trim())));
-        return [0, _adjustToMultiple(Math.ceil(Math.max(values)), 5)];
+        return [0, _adjustToMultiple(Math.ceil(Math.max(...values)), 5)];
     }
 
     /**
@@ -150,14 +152,14 @@ class CAPEResultsFilters {
             this.instructor,
             this.courseNumber,
             this.quarter,
-            // this.year,
-            // this.enrollment,
-            // this.evaluations,
-            // this.recommendClass,
-            // this.recommendInstructor,
-            // this.studyHoursPerWeek,
-            // this.averageExpectedGrade,
-            // this.averageReceivedGrade
+            this.year,
+            this.enrollment,
+            this.evaluations,
+            this.recommendClass,
+            this.recommendInstructor,
+            this.studyHoursPerWeek,
+            this.averageExpectedGrade,
+            this.averageReceivedGrade
         ];
     }
 
@@ -182,7 +184,6 @@ class CAPEResultsFilters {
         form.appendChild(inputReset);
 
         form.addEventListener("submit", CAPEResultsFilters.formData);
-        console.log(form);
 
         return form;
     }
@@ -191,42 +192,82 @@ class CAPEResultsFilters {
      * 
      */
     get instructor() {
-        const fieldset = new _Fieldset("instructor", this.table.instructor);
+        const fieldset = new _Checkbox("instructor", this.table.instructor);
 
         if (this.queryParameters.name) {
-            const element = fieldset.element.querySelector(
+            const element = fieldset.fieldset.querySelector(
                 `input#instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
             );
-            Array.from(fieldset.element.querySelectorAll("input")).forEach((e) => { e.click(); });
+            Array.from(fieldset.fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
             element.click();
         }
 
-        return fieldset.element;
+        return fieldset.fieldset;
     }
 
     /**
      * 
      */
     get courseNumber() {
-        const fieldset = new _Fieldset("course-number", this.table.courseNumber);
+        const fieldset = new _Checkbox("course-number", this.table.courseNumber);
 
         if (this.queryParameters.courseNumber) {
-            const element = fieldset.element.querySelector(
+            const element = fieldset.fieldset.querySelector(
                 `input#course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
             );
-            Array.from(fieldset.element.querySelectorAll("input")).forEach((e) => { e.click(); });
+            Array.from(fieldset.fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
             element.click();
         }
 
-        return fieldset.element;
+        return fieldset.fieldset;
     }
 
     /**
      * 
      */
     get quarter() {
-        const fieldset = new _Fieldset("quarter", this.table.quarter);
-        return fieldset.element;
+        const fieldset = new _Checkbox("quarter", this.table.quarter);
+        return fieldset.fieldset;
+    }
+
+    get year() {
+        const fieldset = new _InputRange("year", ...this.table.year);
+        return fieldset.fieldset;
+    }
+
+    get enrollment() {
+        const fieldset = new _InputRange("enrollment", ...this.table.enrollment);
+        return fieldset.fieldset;
+    }
+
+    get evaluations() {
+        const fieldset = new _InputRange("evaluations", ...this.table.evaluations);
+        return fieldset.fieldset;
+    }
+
+    get recommendClass() {
+        const fieldset = new _InputRange("recommend-class", ...this.table.recommendClass);
+        return fieldset.fieldset;
+    }
+
+    get recommendInstructor() {
+        const fieldset = new _InputRange("recommend-instructor", ...this.table.recommendInstructor);
+        return fieldset.fieldset;
+    }
+
+    get studyHoursPerWeek() {
+        const fieldset = new _InputRange("study-hours-per-week", ...this.table.studyHoursPerWeek);
+        return fieldset.fieldset;
+    }
+
+    get averageExpectedGrade() {
+        const fieldset = new _InputRange("average-expected-grade", ...this.table.averageExpectedGrade);
+        return fieldset.fieldset;
+    }
+
+    get averageReceivedGrade() {
+        const fieldset = new _InputRange("average-received-grade", ...this.table.averageExpectedGrade);
+        return fieldset.fieldset;
     }
 
     /**
@@ -240,15 +281,20 @@ class CAPEResultsFilters {
 
         this.formFields.forEach(
             (e) => {
-                const options = e.querySelectorAll(
-                    "table > tr.filter-field > div.field-option > input[type='checkbox']"
+                const options = Array.from(
+                    e.querySelectorAll(
+                        "table > tr.filter-field > div.field-option > input[type='checkbox']"
+                    )
                 );
                 const button = e.querySelector(
                     "legend > button.field-select-all"
                 );
-                button.innerText = (
-                    Array.from(options).map((e) => e.checked).some((x) => !Boolean(x)) ? "Select All": "De-Select All"
-                );
+
+                if (button) {
+                    button.innerText = (
+                        options.map((e) => e.checked).some((x) => !Boolean(x)) ? "Select All": "De-Select All"
+                    );
+                }
             }
         );
     }
@@ -266,11 +312,23 @@ class CAPEResultsFilters {
         event.preventDefault();
 
         const data = new Map();
-        const checkboxFields = [
-            "instructor", "course-number", "quarter"
+        const fieldsCheckbox = [
+            "instructor",
+            "course-number",
+            "quarter"
+        ];
+        const fieldsInputRange = [
+            "year",
+            "enrollment",
+            "evaluations",
+            "recommend-class",
+            "recommend-instructor",
+            "study-hours-per-week",
+            "average-expected-grade",
+            "average-received-grade"
         ];
 
-        checkboxFields.forEach(
+        fieldsCheckbox.forEach(
             (x) => {
                 const fieldData = new Map();
                 const elements = Array.from(
@@ -284,6 +342,24 @@ class CAPEResultsFilters {
                 data.set(x, fieldData);
             }
         );
+        fieldsInputRange.forEach(
+            (x) => {
+                const fieldData = new Map();
+                const fields = ["minimum", "maximum"];
+                fields.forEach(
+                    (y) => {
+                        fieldData.set(
+                            y, parseInt(
+                                document.querySelector(
+                                    `form#cape-results-filters > fieldset[name='${x}'] input#${x}-${y}[type='range']`
+                                ).value
+                            )
+                        );
+                    }
+                );
+                data.set(x, fieldData);
+            }
+        );
 
         console.log(data);
         return Object.fromEntries(data);
@@ -291,24 +367,65 @@ class CAPEResultsFilters {
 }
 
 
+/**
+ * 
+ */
 class _Fieldset {
-    constructor(name, values) {
-        this.name = name, this.values = values;
+    /**
+     * 
+     * @param {*} name 
+     */
+    constructor(name) { this.name = name; }
+
+    /**
+     * 
+     */
+    get fieldset() { return this._fieldset(); }
+
+    /**
+     * 
+     */
+    get legend() { return this._legend(); }
+
+    /**
+     * 
+     */
+    get buttonToggle() {
+        const button = this._buttonControl();
+
+        button.classList.add("toggle-field");
+        button.addEventListener(
+            "click",
+            () => {
+                const tr = document.querySelector(
+                    `fieldset[name='${this.name}'] > table > tr.filter-field`
+                );
+                const isVisible = (!tr.style.visibility || tr.style.visibility === "visible");
+                tr.style.visibility = (isVisible ? "collapse" : "visible");
+            }
+        );
+        button.innerText = "(Hide/Show Field)";
+
+        return button;
     }
 
-    get element() {
+    /**
+     * 
+     * @returns 
+     */
+    _fieldset() {
         const fieldset = document.createElement("fieldset");
         fieldset.setAttribute("name", this.name);
         fieldset.appendChild(this.legend);
 
-        const table = document.createElement("table");
-        table.appendChild(this.checkboxes);
-        fieldset.appendChild(table);
-
         return fieldset;
     }
 
-    get legend() {
+    /**
+     * 
+     * @returns 
+     */
+    _legend() {
         const legend = document.createElement("legend");
 
         const span = document.createElement("span");
@@ -318,12 +435,64 @@ class _Fieldset {
         ).join(" ");
         legend.appendChild(span);
 
+        return legend;
+    }
+
+    _buttonControl() {
+        const button = document.createElement("button");
+
+        button.classList.add("field-control");
+        button.setAttribute("type", "button");
+        button.setAttribute("onmouseover", "style='text-decoration: underline'");
+        button.setAttribute("onmouseout", "style='text-decoration: none'");
+
+        return button;
+    }
+}
+
+
+/**
+ * 
+ */
+class _Checkbox extends _Fieldset {
+    /**
+     * 
+     * @param {*} name 
+     * @param {*} values 
+     */
+    constructor(name, values) {
+        super(name);
+        this.values = values;
+    }
+
+    /**
+     * 
+     */
+    get fieldset() {
+        const fieldset = this._fieldset();
+
+        const table = document.createElement("table");
+        table.appendChild(this.checkboxes);
+        fieldset.appendChild(table);
+
+        return fieldset;
+    }
+
+    /**
+     * 
+     */
+    get legend() {
+        const legend = this._legend()
+
         legend.appendChild(this.buttonToggle);
         legend.appendChild(this.buttonSelectAll);
 
         return legend;
     }
 
+    /**
+     * 
+     */
     get checkboxes() {
         const tr = document.createElement("tr");
         tr.classList.add("filter-field")
@@ -352,31 +521,11 @@ class _Fieldset {
         return tr;
     }
 
-    get buttonToggle() {
-        const button = this.buttonControl();
-
-        button.classList.add("toggle-field");
-        button.addEventListener(
-            "click",
-            () => {
-                const tr = document.querySelector(
-                    `fieldset[name='${this.name}'] > table > tr.filter-field`
-                );
-                const button = document.querySelector(
-                    `fieldset[name='${this.name}'] > legend > button.field-select-all`
-                );
-                const isVisible = (!tr.style.visibility || tr.style.visibility === "visible");
-                tr.style.visibility = (isVisible ? "collapse" : "visible");
-                button.style.visibility = (isVisible ? "hidden" : "visible");
-            }
-        );
-        button.innerText = "(Hide/Show Field)";
-
-        return button;
-    }
-
+    /**
+     * 
+     */
     get buttonSelectAll() {
-        const button = this.buttonControl();
+        const button = this._buttonControl();
 
         button.classList.add("field-select-all");
         button.addEventListener(
@@ -412,16 +561,72 @@ class _Fieldset {
 
         return button;
     }
+}
 
-    buttonControl() {
-        const button = document.createElement("button");
 
-        button.classList.add("field-control");
-        button.setAttribute("type", "button");
-        button.setAttribute("onmouseover", "style='text-decoration: underline'");
-        button.setAttribute("onmouseout", "style='text-decoration: none'");
+/**
+ * 
+ */
+class _InputRange extends _Fieldset {
+    /**
+     * 
+     * @param {*} name 
+     * @param {*} min 
+     * @param {*} max 
+     */
+    constructor(name, min, max) {
+        super(name);
+        this.min = min, this.max = max;
+    }
 
-        return button;
+    /**
+     * 
+     */
+    get fieldset() {
+        const fieldset = this._fieldset();
+
+        const table = document.createElement("table");
+        table.appendChild(this.inputs);
+        fieldset.appendChild(table);
+
+        return fieldset;
+    }
+
+    get legend() {
+        const legend = this._legend();
+
+        legend.append(this.buttonToggle);
+
+        return legend;
+    }
+
+    get inputs() {
+        const tr = document.createElement("tr");
+        tr.classList.add("filter-field")
+
+        const fields = ["minimum", "maximum"];
+        fields.forEach(
+            (x) => {
+                const id = `${this.name}-${x}`;
+
+                const div = document.createElement("div");
+                // div.classList.add();
+
+                const input = document.createElement("input");
+                input.setAttribute("type", "range");
+                input.setAttribute("id", id);
+                div.appendChild(input);
+
+                const label = document.createElement("label");
+                label.setAttribute("for", id);
+                label.innerText = (x === "min" ? "Minimum" : "Maximum");
+                div.appendChild(label);
+
+                tr.appendChild(div);
+            }
+        );
+
+        return tr;
     }
 }
 
