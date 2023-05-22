@@ -191,194 +191,42 @@ class CAPEResultsFilters {
      * 
      */
     get instructor() {
-        const fieldset = this._fieldset("instructor", this.table.instructor);
+        const fieldset = new _Fieldset("instructor", this.table.instructor);
 
         if (this.queryParameters.name) {
-            const element = fieldset.querySelector(
+            const element = fieldset.element.querySelector(
                 `input#instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
             );
-            Array.from(fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
+            Array.from(fieldset.element.querySelectorAll("input")).forEach((e) => { e.click(); });
             element.click();
         }
 
-        return fieldset;
+        return fieldset.element;
     }
 
     /**
      * 
      */
     get courseNumber() {
-        const fieldset = this._fieldset("course-number", this.table.courseNumber);
+        const fieldset = new _Fieldset("course-number", this.table.courseNumber);
 
         if (this.queryParameters.courseNumber) {
-            const element = fieldset.querySelector(
+            const element = fieldset.element.querySelector(
                 `input#course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
             );
-            Array.from(fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
+            Array.from(fieldset.element.querySelectorAll("input")).forEach((e) => { e.click(); });
             element.click();
         }
 
-        return fieldset;
+        return fieldset.element;
     }
 
     /**
      * 
      */
-    get quarter() { return this._fieldset("quarter", this.table.quarter); }
-
-    /**
-     * 
-     * @param {*} name 
-     * @param {*} values 
-     * @returns 
-     */
-    _fieldset(name, values) {
-        const fieldset = document.createElement("fieldset");
-        fieldset.setAttribute("name", name);
-        fieldset.appendChild(this._fieldsetLegend(name));
-
-        const table = document.createElement("table");
-        table.appendChild(this._fieldsetCheckbox(name, values));
-        fieldset.appendChild(table);
-
-        return fieldset;
-    }
-
-    /**
-     * 
-     * @param {*} name 
-     * @returns 
-     */
-    _fieldsetLegend(name) {
-        const legend = document.createElement("legend");
-
-        const span = document.createElement("span");
-        span.classList.add("field-name");
-        span.innerText = name.split("-").map(
-            (s) => s[0].toUpperCase().concat(s.slice(1).toLowerCase())
-        ).join(" ");
-        legend.append(span);
-
-        legend.appendChild(this._fieldsetToggleButton(name));
-        legend.appendChild(this._fieldsetSelectAllButton(name));
-
-        return legend;
-    }
-
-    /**
-     * 
-     * @returns 
-     */
-    _fieldsetButton() {
-        const button = document.createElement("button");
-
-        button.classList.add("field-control");
-        button.setAttribute("type", "button");
-        button.setAttribute("onmouseover", "style='text-decoration: underline'");
-        button.setAttribute("onmouseout", "style='text-decoration: none'");
-
-        return button;
-    }
-
-    /**
-     * 
-     * @param {*} name 
-     * @returns 
-     */
-    _fieldsetSelectAllButton(name) {
-        const button = this._fieldsetButton();
-
-        button.classList.add("field-select-all");
-        button.addEventListener(
-            "click",
-            () => {
-                const options = Array.from(
-                    document.querySelectorAll(
-                        `fieldset[name='${name}'] > table > tr.filter-field > div.field-option > input[type='checkbox']`
-                    )
-                );
-                const element = document.querySelector(
-                    `fieldset[name='${name}'] > legend > button.field-select-all`
-                );
-                if (options.map((e) => e.checked).some((x) => !Boolean(x))) {
-                    options.forEach(
-                        (e) => {
-                            if (!e.checked) { e.click() };
-                            element.innerText = "De-Select All";
-                        }
-                    );
-                } else {
-                    options.forEach(
-                        (e) => {
-                            if (e.checked) { e.click(); }
-                            element.innerText = "Select All";
-                        }
-                    );
-                }
-            }
-        );
-
-        button.innerText = "Select All";
-
-        return button;
-    }
-
-    /**
-     * 
-     * @param {*} name 
-     * @returns 
-     */
-    _fieldsetToggleButton(name) {
-        const button = this._fieldsetButton();
-
-        button.classList.add("toggle-field");
-        button.addEventListener(
-            "click",
-            () => {
-                const tr = document.querySelector(`fieldset[name='${name}'] > table > tr.filter-field`);
-                const button = document.querySelector(`fieldset[name='${name}'] > legend > button.field-select-all`);
-                const isVisible = (!tr.style.visibility || tr.style.visibility === "visible");
-                tr.style.visibility = (isVisible ? "collapse" : "visible");
-                button.style.visibility = (isVisible ? "hidden" : "visible");
-            }
-        );
-        button.innerText = "(Hide/Show Field)";
-
-        return button;
-    }
-
-    /**
-     * 
-     * @param {*} name 
-     * @param {*} values 
-     * @returns 
-     */
-    _fieldsetCheckbox(name, values) {
-        const tr = document.createElement("tr");
-        tr.classList.add("filter-field")
-
-        for (let i = 0; i < values.length; ++i) {
-            const id = `${name}-${i}`;
-
-            const div = document.createElement("div");
-            div.classList.add("field-option");
-
-            const input = document.createElement("input");
-            input.setAttribute("type", "checkbox");
-            input.setAttribute("id", id);
-            input.setAttribute("value", String(i));
-            input.click();
-            div.appendChild(input);
-
-            const label = document.createElement("label");
-            label.setAttribute("for", id);
-            label.innerText = values[i];
-            div.appendChild(label);
-
-            tr.appendChild(div);
-        }
-
-        return tr;
+    get quarter() {
+        const fieldset = new _Fieldset("quarter", this.table.quarter);
+        return fieldset.element;
     }
 
     /**
@@ -437,7 +285,143 @@ class CAPEResultsFilters {
             }
         );
 
+        console.log(data);
         return Object.fromEntries(data);
+    }
+}
+
+
+class _Fieldset {
+    constructor(name, values) {
+        this.name = name, this.values = values;
+    }
+
+    get element() {
+        const fieldset = document.createElement("fieldset");
+        fieldset.setAttribute("name", this.name);
+        fieldset.appendChild(this.legend);
+
+        const table = document.createElement("table");
+        table.appendChild(this.checkboxes);
+        fieldset.appendChild(table);
+
+        return fieldset;
+    }
+
+    get legend() {
+        const legend = document.createElement("legend");
+
+        const span = document.createElement("span");
+        span.classList.add("field-name");
+        span.innerText = this.name.split("-").map(
+            (s) => s[0].toUpperCase().concat(s.slice(1).toLowerCase())
+        ).join(" ");
+        legend.appendChild(span);
+
+        legend.appendChild(this.buttonToggle);
+        legend.appendChild(this.buttonSelectAll);
+
+        return legend;
+    }
+
+    get checkboxes() {
+        const tr = document.createElement("tr");
+        tr.classList.add("filter-field")
+
+        for (let i = 0; i < this.values.length; ++i) {
+            const id = `${this.name}-${i}`;
+
+            const div = document.createElement("div");
+            div.classList.add("field-option");
+
+            const input = document.createElement("input");
+            input.setAttribute("type", "checkbox");
+            input.setAttribute("id", id);
+            input.setAttribute("value", String(i));
+            input.click();
+            div.appendChild(input);
+
+            const label = document.createElement("label");
+            label.setAttribute("for", id);
+            label.innerText = this.values[i];
+            div.appendChild(label);
+
+            tr.appendChild(div);
+        }
+
+        return tr;
+    }
+
+    get buttonToggle() {
+        const button = this.buttonControl();
+
+        button.classList.add("toggle-field");
+        button.addEventListener(
+            "click",
+            () => {
+                const tr = document.querySelector(
+                    `fieldset[name='${this.name}'] > table > tr.filter-field`
+                );
+                const button = document.querySelector(
+                    `fieldset[name='${this.name}'] > legend > button.field-select-all`
+                );
+                const isVisible = (!tr.style.visibility || tr.style.visibility === "visible");
+                tr.style.visibility = (isVisible ? "collapse" : "visible");
+                button.style.visibility = (isVisible ? "hidden" : "visible");
+            }
+        );
+        button.innerText = "(Hide/Show Field)";
+
+        return button;
+    }
+
+    get buttonSelectAll() {
+        const button = this.buttonControl();
+
+        button.classList.add("field-select-all");
+        button.addEventListener(
+            "click",
+            () => {
+                const options = Array.from(
+                    document.querySelectorAll(
+                        `fieldset[name='${this.name}'] > table > tr.filter-field > div.field-option > input[type='checkbox']`
+                    )
+                );
+                const element = document.querySelector(
+                    `fieldset[name='${this.name}'] > legend > button.field-select-all`
+                );
+                if (options.map((e) => e.checked).some((x) => !Boolean(x))) {
+                    options.forEach(
+                        (e) => {
+                            if (!e.checked) { e.click() };
+                            element.innerText = "De-Select All";
+                        }
+                    );
+                } else {
+                    options.forEach(
+                        (e) => {
+                            if (e.checked) { e.click(); }
+                            element.innerText = "Select All";
+                        }
+                    );
+                }
+            }
+        );
+
+        button.innerText = "Select All";
+
+        return button;
+    }
+
+    buttonControl() {
+        const button = document.createElement("button");
+
+        button.classList.add("field-control");
+        button.setAttribute("type", "button");
+        button.setAttribute("onmouseover", "style='text-decoration: underline'");
+        button.setAttribute("onmouseout", "style='text-decoration: none'");
+
+        return button;
     }
 }
 
