@@ -646,6 +646,7 @@ class _InputRange extends _Fieldset {
                 input.setAttribute("max", this.max);
                 input.setAttribute("step", this.step);
                 input.setAttribute("value", [this.min, this.max][fields.indexOf(x)]);
+                input.addEventListener("input", _InputRange.validateInputRange);
                 div.appendChild(input);
 
                 const datalist = document.createElement("datalist");
@@ -665,6 +666,19 @@ class _InputRange extends _Fieldset {
         );
 
         return tr;
+    }
+
+    static validateInputRange(event) {
+        let other;
+        if (this.parentElement.nextSibling) {
+            other = this.parentElement.nextSibling.querySelector("input[type='range']");
+            if (this.value > other.value) { this.value = other.value; }
+        } else if (this.parentElement.previousSibling) {
+            other = this.parentElement.previousSibling.querySelector("input[type='range']");
+            if (this.value < other.value) { this.value = other.value; }
+        } else {
+            throw new Error();
+        }
     }
 }
 
