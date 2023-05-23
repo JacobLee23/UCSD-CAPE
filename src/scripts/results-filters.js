@@ -8,6 +8,8 @@ function insertCAPEResultsFilters(message, sender, sendResponse) {
 
     const filters = new CAPEResultsFilters(message.queryParameters.Name, message.queryParameters.CourseNumber);
     filters.insertForm();
+
+    sendResponse(true);
 }
 
 
@@ -71,55 +73,69 @@ class CAPEResultsTable {
                 (e) => parseInt(re.exec(e.innerText.trim())[2]) + 2000
             )
         );
-        return [
-            _adjustToMultiple(Math.min(...values), 5, false),
-            _adjustToMultiple(Math.max(...values), 5, true)
-        ];
+        const step = 5;
+        const min = _adjustToMultiple(Math.min(...values), step, false);
+        const max = _adjustToMultiple(Math.max(...values), step, true);
+        return [...Array(max - min + 1).keys()].map((x) => x + min);
     }
 
     /**
      * 
      */
     get enrollment() {
-        let values = _uniqueValues(this._scrapeTableColumn(4).map((e) => parseInt(e.innerText.trim())));
-        return [0, _adjustToMultiple(Math.max(...values), 25)];
+        const values = _uniqueValues(this._scrapeTableColumn(4).map((e) => parseInt(e.innerText.trim())));
+        const step = 25;
+        const max = _adjustToMultiple(Math.max(...values), step);
+        return [...Array(max / step + 1).keys()].map((x) => step * x);
     }
 
     /**
      * 
      */
     get evaluations() {
-        let values = _uniqueValues(this._scrapeTableColumn(5).map((e) => parseInt(e.innerText.trim())));
-        return [0, _adjustToMultiple(Math.max(...values), 25)];
+        const values = _uniqueValues(this._scrapeTableColumn(5).map((e) => parseInt(e.innerText.trim())));
+        const step = 25;
+        const max = _adjustToMultiple(Math.max(...values), step);
+        return [...Array(max / step + 1).keys()].map((x) => step * x);
     }
 
     /**
      * 
      */
-    get recommendClass() { return [0, 100]; }
+    get recommendClass() {
+        return [...Array(11).keys()].map((x) => 10 * x);
+    }
 
     /**
      * 
      */
-    get recommendInstructor() { return [0, 100]; }
+    get recommendInstructor() {
+        return [...Array(11).keys()].map((x) => 10 * x);
+    }
 
     /**
      * 
      */
     get studyHoursPerWeek() {
-        let values = _uniqueValues(this._scrapeTableColumn(6).map((e) => parseFloat(e.innerText.trim())));
-        return [0, _adjustToMultiple(Math.ceil(Math.max(...values)), 5)];
+        const values = _uniqueValues(this._scrapeTableColumn(6).map((e) => parseFloat(e.innerText.trim())));
+        const step = 5;
+        const max = _adjustToMultiple(Math.ceil(Math.max(...values)), step);
+        return [...Array(max / step + 1).keys()].map((x) => step * x);
     }
 
     /**
      * 
      */
-    get averageExpectedGrade() { return [0, 4]; }
+    get averageExpectedGrade() {
+        return [...Array(17).keys()].map((x) => 0.25 * x);
+    }
 
     /**
      * 
      */
-    get averageReceivedGrade() { return [0, 4]; }
+    get averageReceivedGrade() {
+        return [...Array(17).keys()].map((x) => 0.25 * x);
+    }
 
     /**
      * 
@@ -226,47 +242,50 @@ class CAPEResultsFilters {
      * 
      */
     get quarter() {
-        const fieldset = new _Checkbox("quarter", this.table.quarter);
+        const fieldset = new _Checkbox("quarter", this.table.quarter, 1);
         return fieldset.fieldset;
     }
 
     get year() {
-        const fieldset = new _InputRange("year", ...this.table.year);
+        const fieldset = new _InputRange("year", this.table.year, 1);
         return fieldset.fieldset;
     }
 
     get enrollment() {
-        const fieldset = new _InputRange("enrollment", ...this.table.enrollment);
+        const fieldset = new _InputRange("enrollment", this.table.enrollment, 1);
         return fieldset.fieldset;
     }
 
     get evaluations() {
-        const fieldset = new _InputRange("evaluations", ...this.table.evaluations);
+        const fieldset = new _InputRange("evaluations", this.table.evaluations, 1);
         return fieldset.fieldset;
     }
 
     get recommendClass() {
-        const fieldset = new _InputRange("recommend-class", ...this.table.recommendClass);
+        const fieldset = new _InputRange("recommend-class", this.table.recommendClass, 0.1);
         return fieldset.fieldset;
     }
 
     get recommendInstructor() {
-        const fieldset = new _InputRange("recommend-instructor", ...this.table.recommendInstructor);
+        const fieldset = new _InputRange("recommend-instructor", this.table.recommendInstructor, 0.1);
         return fieldset.fieldset;
     }
 
     get studyHoursPerWeek() {
-        const fieldset = new _InputRange("study-hours-per-week", ...this.table.studyHoursPerWeek);
+        const fieldset = new _InputRange("study-hours-per-week", this.table.studyHoursPerWeek, 0.01);
+        Array.from(fieldset.fieldset.querySelectorAll("input[type='range']")).forEach(
+            (e) => { e.setAttribute("step", "0.01"); }
+        );
         return fieldset.fieldset;
     }
 
     get averageExpectedGrade() {
-        const fieldset = new _InputRange("average-expected-grade", ...this.table.averageExpectedGrade);
+        const fieldset = new _InputRange("average-expected-grade", this.table.averageExpectedGrade, 0.01);
         return fieldset.fieldset;
     }
 
     get averageReceivedGrade() {
-        const fieldset = new _InputRange("average-received-grade", ...this.table.averageExpectedGrade);
+        const fieldset = new _InputRange("average-received-grade", this.table.averageExpectedGrade, 0.01);
         return fieldset.fieldset;
     }
 
@@ -571,12 +590,13 @@ class _InputRange extends _Fieldset {
     /**
      * 
      * @param {*} name 
-     * @param {*} min 
-     * @param {*} max 
+     * @param {*} values 
      */
-    constructor(name, min, max) {
+    constructor(name, values, step) {
         super(name);
-        this.min = min, this.max = max;
+        this.values = values;
+        this.min = Math.min(...this.values), this.max = Math.max(...this.values);
+        this.step = new String(step);
     }
 
     /**
@@ -608,6 +628,7 @@ class _InputRange extends _Fieldset {
         fields.forEach(
             (x) => {
                 const id = `${this.name}-${x}`;
+                const idList = `list-${id}`;
 
                 const div = document.createElement("div");
                 div.classList.add("field-range");
@@ -620,7 +641,24 @@ class _InputRange extends _Fieldset {
                 const input = document.createElement("input");
                 input.setAttribute("type", "range");
                 input.setAttribute("id", id);
+                input.setAttribute("list", idList);
+                input.setAttribute("min", this.min);
+                input.setAttribute("max", this.max);
+                input.setAttribute("step", this.step);
+                input.setAttribute("value", [this.min, this.max][fields.indexOf(x)]);
                 div.appendChild(input);
+
+                const datalist = document.createElement("datalist");
+                datalist.setAttribute("id", idList);
+                this.values.forEach(
+                    (y) => {
+                        const option = document.createElement("option");
+                        option.setAttribute("value", y);
+                        option.setAttribute("label", y);
+                        datalist.appendChild(option);
+                    }
+                );
+                div.appendChild(datalist);
 
                 tr.appendChild(div);
             }

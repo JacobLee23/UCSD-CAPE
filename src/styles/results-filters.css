@@ -1,3 +1,15 @@
+datalist {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    writing-mode: vertical-lr;
+    font-size: 10px;
+}
+
+datalist > option {
+    padding: 0px;
+}
+
 form#cape-results-filters {
     border: 1px solid gray;
     padding: 25px;
@@ -55,4 +67,8 @@ form#cape-results-filters > fieldset > table > tr.filter-field > div.field-range
     display: inline-grid;
     width: 40%;
     margin: 0% 5%;
+}
+
+input[type="range"] {
+    margin: 0px;
 }

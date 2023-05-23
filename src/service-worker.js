@@ -25,7 +25,9 @@ class CAPEPage {
         message.set("type", "filters");
 
         const data = Object.fromEntries(message);
-        chrome.tabs.sendMessage(tab.id, data);
+        chrome.tabs.sendMessage(tab.id, data).then(
+            (x) => { if(!x) { throw new Error(); } }
+        );
     }
 
     /**
