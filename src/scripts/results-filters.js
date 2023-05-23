@@ -628,7 +628,6 @@ class _InputRange extends _Fieldset {
         fields.forEach(
             (x) => {
                 const id = `${this.name}-${x}`;
-                const idList = `list-${id}`;
 
                 const div = document.createElement("div");
                 div.classList.add("field-range");
@@ -638,19 +637,29 @@ class _InputRange extends _Fieldset {
                 label.innerText = x[0].toUpperCase().concat(x.slice(1).toLowerCase());
                 div.appendChild(label);
 
-                const input = document.createElement("input");
-                input.setAttribute("type", "range");
-                input.setAttribute("id", id);
-                input.setAttribute("list", idList);
-                input.setAttribute("min", this.min);
-                input.setAttribute("max", this.max);
-                input.setAttribute("step", this.step);
-                input.setAttribute("value", [this.min, this.max][fields.indexOf(x)]);
-                input.addEventListener("input", _InputRange.validateInputRange);
-                div.appendChild(input);
+                const inputNumber = document.createElement("input");
+                inputNumber.setAttribute("type", "number");
+                inputNumber.setAttribute("id", `${id}-number`);
+                inputNumber.setAttribute("min", this.min);
+                inputNumber.setAttribute("max", this.max);
+                inputNumber.setAttribute("step", this.step);
+                inputNumber.setAttribute("value", [this.min, this.max][fields.indexOf(x)]);
+                inputNumber.addEventListener("input", _InputRange.validateInputNumber);
+                div.appendChild(inputNumber);
+
+                const inputRange = document.createElement("input");
+                inputRange.setAttribute("type", "range");
+                inputRange.setAttribute("id", `${id}-range`);
+                inputRange.setAttribute("list", `${id}-list`);
+                inputRange.setAttribute("min", this.min);
+                inputRange.setAttribute("max", this.max);
+                inputRange.setAttribute("step", this.step);
+                inputRange.setAttribute("value", [this.min, this.max][fields.indexOf(x)]);
+                inputRange.addEventListener("input", _InputRange.validateInputRange);
+                div.appendChild(inputRange);
 
                 const datalist = document.createElement("datalist");
-                datalist.setAttribute("id", idList);
+                datalist.setAttribute("id", `${id}-list`);
                 this.values.forEach(
                     (y) => {
                         const option = document.createElement("option");
@@ -668,6 +677,29 @@ class _InputRange extends _Fieldset {
         return tr;
     }
 
+    /**
+     * 
+     * @param {*} event 
+     */
+    static validateInputNumber(event) {
+        let other;
+        if (this.parentElement.nextSibling) {
+            other = this.parentElement.nextSibling.querySelector("input[type='number']");
+            if (this.value > other.value) { this.value = other.value; }
+        } else if (this.parentElement.previousSibling) {
+            other = this.parentElement.previousSibling.querySelector("input[type='number']");
+            if (this.value < other.value) { this.value = other.value; }
+        } else {
+            throw new Error();
+        }
+
+        this.nextSibling.value = this.value;
+    }
+
+    /**
+     * 
+     * @param {*} event 
+     */
     static validateInputRange(event) {
         let other;
         if (this.parentElement.nextSibling) {
@@ -679,6 +711,8 @@ class _InputRange extends _Fieldset {
         } else {
             throw new Error();
         }
+
+        this.previousSibling.value = this.value;
     }
 }
 
