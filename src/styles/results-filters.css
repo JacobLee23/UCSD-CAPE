@@ -28,39 +28,39 @@ form#cape-results-filters > fieldset > legend > button.field-select-all {
     float: right;
 }
 
-form#cape-results-filters > fieldset > table {
+form#cape-results-filters > fieldset {
     width: 100%;
 }
 
-form#cape-results-filters > fieldset > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset > div.field-option {
     display: inline-block;
 }
 
-form#cape-results-filters > fieldset[name='instructor'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='instructor'] > div.field-option {
     width: 20%;
 }
 
-form#cape-results-filters > fieldset[name='course-number'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='course-number'] > div.field-option {
     width: 10%;
 }
 
-form#cape-results-filters > fieldset[name='quarter'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='quarter'] > div.field-option {
     width: 5%;
 }
 
-form#cape-results-filters > fieldset[name='year'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='year'] > div.field-option {
     width: 10%;
 }
 
-form#cape-results-filters > fieldset[name='average-expected-grade'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='average-expected-grade'] > div.field-option {
     width: 5%;
 }
 
-form#cape-results-filters > fieldset[name='average-received-grade'] > table > tr.filter-field > div.field-option {
+form#cape-results-filters > fieldset[name='average-received-grade'] > div.field-option {
     width: 5%;
 }
 
-form#cape-results-filters > fieldset > table > tr.filter-field > div.field-range {
+form#cape-results-filters > fieldset > div.field-range {
     display: inline-grid;
     width: 40%;
     margin: 0% 5%;

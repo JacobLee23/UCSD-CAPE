@@ -184,22 +184,21 @@ class CAPEResultsFilters {
      */
     get form() {
         const form = document.createElement("form");
-        form.setAttribute("id", "cape-results-filters")
-        form.setAttribute("name", "cape-results-filters");
+        form.id = form.name = "cape-results-filters";
+        form.addEventListener("submit", CAPEResultsFilters.formData);
 
         this.formFields.forEach((e) => { form.appendChild(e) });
 
         const inputSubmit = document.createElement("input");
-        inputSubmit.setAttribute("type", "submit");
-        inputSubmit.setAttribute("value", "Filter Results");
-        form.appendChild(inputSubmit);
+        inputSubmit.type = "submit";
+        inputSubmit.value = "Filter Results";
 
         const inputReset = document.createElement("input");
-        inputReset.setAttribute("type", "reset");
-        inputReset.setAttribute("value", "Reset Form");
-        form.appendChild(inputReset);
+        inputReset.type = "reset";
+        inputReset.value = "Reset Form";
 
-        form.addEventListener("submit", CAPEResultsFilters.formData);
+        form.appendChild(inputSubmit);
+        form.appendChild(inputReset);
 
         return form;
     }
@@ -255,9 +254,6 @@ class CAPEResultsFilters {
 
     get studyHoursPerWeek() {
         const fieldset = new _InputRange("study-hours-per-week", this.table.studyHoursPerWeek, 0.01);
-        Array.from(fieldset.fieldset.querySelectorAll("input[type='range']")).forEach(
-            (e) => { e.setAttribute("step", "0.01"); }
-        );
         return fieldset.fieldset;
     }
 
@@ -280,17 +276,23 @@ class CAPEResultsFilters {
         const eTable = document.getElementById("ContentPlaceHolder1_UpdatePanel1").querySelector("div.field");
         eTable.insertAdjacentElement("afterend", this.form);
 
+        let options, button;
+
+        options = Array.from(
+            document.querySelectorAll(
+                "fieldset[name='instructor'] > div.field-option > input[type='checkbox']"
+            )
+        );
+        button = document.querySelector("fieldset[name='instructor'] > legend > button.field-select-all")
         if (this.queryParameters.name) {
             document.getElementById(
                 `instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
             ).click();
         } else {
-            Array.from(
-                document.querySelectorAll(
-                    "fieldset[name='instructor'] > table > tr.filter-field > div.field-option > input[type='checkbox']"
-                )
-            ).forEach((e) => { e.click(); });
+            options.forEach((e) => { e.click(); });
         }
+        if (options.every((e) => e.checked)) {}
+        
 
         if (this.queryParameters.courseNumber) {
             document.getElementById(
@@ -299,16 +301,20 @@ class CAPEResultsFilters {
         } else {
             Array.from(
                 document.querySelectorAll(
-                    "fieldset[name='courseNumber'] > table > tr.filter-field > div.field-option > input[type='checkbox']"
+                    "fieldset[name='courseNumber'] > div.field-option > input[type='checkbox']"
                 )
             ).forEach((e) => { e.click(); });
+            document.querySelector(
+                "fieldset[name='courseNumber'] > legend > button.field-select-all"
+            ).innerText = "De-Select All";
         }
 
-        Array.from(
+        options = Array.from(
             document.querySelectorAll(
-                "fieldset[name='quarter'] > table > tr.filter-field > div.field-option > input[type='checkbox']"
+                "fieldset[name='quarter'] > div.field-option > input[type='checkbox']"
             )
-        ).forEach((e) => { e.click(); });
+        );
+        options.forEach((e) => { e.click(); });
     }
 
     removeForm() {
@@ -335,7 +341,7 @@ class CAPEResultsFilters {
         fieldsCheckbox.forEach(
             (x) => {
                 const elements = document.querySelectorAll(
-                    `form#cape-results-filters > fieldset[name='${x}'] input[type='checkbox']`
+                    `form#cape-results-filters > fieldset[name='${x}'] > div.field-option > input[type='checkbox']`
                 );
                 data.set(x, CAPEResultsFilters.dataCheckbox(elements));
             }
@@ -386,41 +392,27 @@ class _Fieldset {
     /**
      * 
      * @param {*} name 
-     */
-    constructor(name) { this.name = name; }
-
-    /**
-     * 
-     */
-    get fieldset() { return this._fieldset(); }
-
-    /**
-     * 
-     */
-    get legend() { return this._legend(); }
-
-    /**
-     * 
      * @returns 
      */
-    _fieldset() {
+    static fieldset(name) {
         const fieldset = document.createElement("fieldset");
-        fieldset.setAttribute("name", this.name);
-        fieldset.appendChild(this.legend);
+        fieldset.name = name;
+        fieldset.appendChild(_Fieldset.legend(name));
 
         return fieldset;
     }
 
     /**
      * 
+     * @param {*} name 
      * @returns 
      */
-    _legend() {
+    static legend(name) {
         const legend = document.createElement("legend");
 
         const span = document.createElement("span");
         span.classList.add("field-name");
-        span.innerText = this.name.split("-").map(
+        span.innerText = name.split("-").map(
             (s) => s[0].toUpperCase().concat(s.slice(1).toLowerCase())
         ).join(" ");
         legend.appendChild(span);
@@ -433,109 +425,95 @@ class _Fieldset {
 /**
  * 
  */
-class _Checkbox extends _Fieldset {
+class _Checkbox {
     /**
      * 
      * @param {*} name 
      * @param {*} values 
      */
     constructor(name, values) {
-        super(name);
-        this.values = values;
+        this.name = name, this.values = values;
+
+        this.fieldset = _Fieldset.fieldset(this.name);
+        this.fieldset.querySelector("legend").appendChild(this.buttonSelectAll());
+        this.checkboxes().forEach((e) => { this.fieldset.appendChild(e); });
     }
 
     /**
      * 
      */
-    get fieldset() {
-        const fieldset = this._fieldset();
-
-        const table = document.createElement("table");
-        table.appendChild(this.checkboxes);
-        fieldset.appendChild(table);
-
-        return fieldset;
-    }
-
-    /**
-     * 
-     */
-    get legend() {
-        const legend = this._legend()
-
-        legend.appendChild(this.buttonSelectAll);
-
-        return legend;
-    }
-
-    /**
-     * 
-     */
-    get checkboxes() {
-        const tr = document.createElement("tr");
-        tr.classList.add("filter-field")
+    checkboxes() {
+        const elements = [];
 
         for (let i = 0; i < this.values.length; ++i) {
-            const id = `${this.name}-${i}`;
-
             const div = document.createElement("div");
             div.classList.add("field-option");
 
             const input = document.createElement("input");
-            input.setAttribute("type", "checkbox");
-            input.setAttribute("id", id);
-            div.appendChild(input);
+            input.type = "checkbox";
+            input.addEventListener("input", _Checkbox.modifyButtonText);
 
             const label = document.createElement("label");
-            label.setAttribute("for", id);
             label.innerText = this.values[i];
-            div.appendChild(label);
 
-            tr.appendChild(div);
+            input.id = label.setAttribute = `${this.name}-${i}`;
+
+            div.appendChild(input);
+            div.appendChild(label);
+            elements.push(div);
         }
 
-        return tr;
+        return elements;
     }
 
     /**
      * 
      */
-    get buttonSelectAll() {
+    buttonSelectAll() {
         const button = document.createElement("button");
 
         button.classList.add("field-select-all");
+        button.type = "button";
+        button.onmouseover = "style='text-decoration: underline'";
+        button.onmouseout = "style='text-decoration: none'";
         button.setAttribute("type", "button");
-        button.setAttribute("onmouseover", "style='text-decoration: underline'");
-        button.setAttribute("onmouseout", "style='text-decoration: none'");
         button.addEventListener("click", _Checkbox.selectAll);
-
         button.innerText = "Select All";
 
         return button;
     }
 
+    /**
+     * 
+     * @param {*} event 
+     */
     static selectAll(event) {
         const options = Array.from(
-            this.parentElement.nextSibling.querySelectorAll(
-                "tr.filter-field > div.field-option > input[type='checkbox']"
+            this.parentElement.parentElement.querySelectorAll(
+                "div.field-option > input[type='checkbox']"
             )
         );
+        if (options.every((e) => e.checked)) { options.forEach((e) => { e.click(); }); }
+        else { options.forEach((e) => { if (!e.checked) { e.click(); }; }); }
 
-        if (options.map((e) => e.checked).every((x) => Boolean(x))) {
-            options.forEach(
-                (e) => {
-                    if (e.checked) { e.click(); }
-                    this.innerText = "Select All";
-                }
-            );
-        } else {
-            options.forEach(
-                (e) => {
-                    if (!e.checked) { e.click(); };
-                    this.innerText = "De-Select All";
-                }
-            );
-        }
+        _Checkbox.modifyButtonText(this);
+    }
+
+    /**
+     * 
+     * @param {*} button 
+     * @returns 
+     */
+    static modifyButtonText(event) {
+        const button = this.parentElement.parentElement.querySelector("legend > button.field-select-all");
+        const options = Array.from(
+            this.parentElement.parentElement.querySelectorAll(
+                "div.field-option > input[type='checkbox']"
+            )
+        );
+        button.innerText = (
+            options.every((e) => e.checked) ? "De-Select All" : "Select All"
+        );
     }
 }
 
@@ -543,35 +521,23 @@ class _Checkbox extends _Fieldset {
 /**
  * 
  */
-class _InputRange extends _Fieldset {
+class _InputRange {
     /**
      * 
      * @param {*} name 
      * @param {*} values 
      */
     constructor(name, values, step) {
-        super(name);
-        this.values = values;
+        this.name = name, this.values = values;
         this.min = Math.min(...this.values), this.max = Math.max(...this.values);
         this.step = new String(step);
+
+        this.fieldset = _Fieldset.fieldset(this.name);
+        this.inputs().forEach((e) => { this.fieldset.appendChild(e); });
     }
 
-    /**
-     * 
-     */
-    get fieldset() {
-        const fieldset = this._fieldset();
-
-        const table = document.createElement("table");
-        table.appendChild(this.inputs);
-        fieldset.appendChild(table);
-
-        return fieldset;
-    }
-
-    get inputs() {
-        const tr = document.createElement("tr");
-        tr.classList.add("filter-field")
+    inputs() {
+        const elements = []
 
         const fields = ["minimum", "maximum"];
         fields.forEach(
@@ -582,48 +548,42 @@ class _InputRange extends _Fieldset {
                 div.classList.add("field-range");
 
                 const label = document.createElement("label");
-                label.setAttribute("for", id);
                 label.innerText = x[0].toUpperCase().concat(x.slice(1).toLowerCase());
-                div.appendChild(label);
 
                 const inputNumber = document.createElement("input");
-                inputNumber.setAttribute("type", "number");
-                inputNumber.setAttribute("id", `${id}-number`);
-                inputNumber.setAttribute("min", this.min);
-                inputNumber.setAttribute("max", this.max);
-                inputNumber.setAttribute("step", this.step);
-                inputNumber.setAttribute("value", [this.min, this.max][fields.indexOf(x)]);
-                inputNumber.addEventListener("input", _InputRange.validateInputNumber);
-                div.appendChild(inputNumber);
+                inputNumber.type = "number";
+                inputNumber.id = `${id}-number`;
+                inputNumber.addEventListener("change", _InputRange.validateInputNumber);
 
                 const inputRange = document.createElement("input");
-                inputRange.setAttribute("type", "range");
-                inputRange.setAttribute("id", `${id}-range`);
-                inputRange.setAttribute("list", `${id}-list`);
-                inputRange.setAttribute("min", this.min);
-                inputRange.setAttribute("max", this.max);
-                inputRange.setAttribute("step", this.step);
-                inputRange.setAttribute("value", [this.min, this.max][fields.indexOf(x)]);
+                inputRange.type = "range";
+                inputRange.id = `${id}-range`;
                 inputRange.addEventListener("input", _InputRange.validateInputRange);
-                div.appendChild(inputRange);
+
+                inputNumber.min = inputRange.min = this.min;
+                inputNumber.max = inputRange.max = this.max;
+                inputNumber.step = inputRange.step = this.step;
+                inputNumber.value = inputRange.value = [this.min, this.max][fields.indexOf(x)];
 
                 const datalist = document.createElement("datalist");
-                datalist.setAttribute("id", `${id}-list`);
+                inputRange.setAttribute("list", datalist.id = `${id}-list`);
                 this.values.forEach(
                     (y) => {
                         const option = document.createElement("option");
-                        option.setAttribute("value", y);
-                        option.setAttribute("label", y);
+                        option.value = option.label = y;
                         datalist.appendChild(option);
                     }
                 );
-                div.appendChild(datalist);
 
-                tr.appendChild(div);
+                div.appendChild(label);
+                div.appendChild(inputNumber);
+                div.appendChild(inputRange);
+                div.appendChild(datalist);
+                elements.push(div);
             }
         );
 
-        return tr;
+        return elements;
     }
 
     /**
