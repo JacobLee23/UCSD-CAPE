@@ -19,15 +19,12 @@ form#cape-results-filters > fieldset > legend > span.field-name {
     float: left;
 }
 
-form#cape-results-filters > fieldset > legend > button.field-control {
+form#cape-results-filters > fieldset > legend > button.field-select-all {
     background: none;
     border: none;
     float: right;
     text-align: right;
     font-size: 15px;
-}
-
-form#cape-results-filters > fieldset > legend > button.field-select-all {
     float: right;
 }
 

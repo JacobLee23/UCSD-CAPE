@@ -209,15 +209,6 @@ class CAPEResultsFilters {
      */
     get instructor() {
         const fieldset = new _Checkbox("instructor", this.table.instructor);
-
-        if (this.queryParameters.name) {
-            const element = fieldset.fieldset.querySelector(
-                `input#instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
-            );
-            Array.from(fieldset.fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
-            element.click();
-        }
-
         return fieldset.fieldset;
     }
 
@@ -226,15 +217,6 @@ class CAPEResultsFilters {
      */
     get courseNumber() {
         const fieldset = new _Checkbox("course-number", this.table.courseNumber);
-
-        if (this.queryParameters.courseNumber) {
-            const element = fieldset.fieldset.querySelector(
-                `input#course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
-            );
-            Array.from(fieldset.fieldset.querySelectorAll("input")).forEach((e) => { e.click(); });
-            element.click();
-        }
-
         return fieldset.fieldset;
     }
 
@@ -298,24 +280,35 @@ class CAPEResultsFilters {
         const eTable = document.getElementById("ContentPlaceHolder1_UpdatePanel1").querySelector("div.field");
         eTable.insertAdjacentElement("afterend", this.form);
 
-        this.formFields.forEach(
-            (e) => {
-                const options = Array.from(
-                    e.querySelectorAll(
-                        "table > tr.filter-field > div.field-option > input[type='checkbox']"
-                    )
-                );
-                const button = e.querySelector(
-                    "legend > button.field-select-all"
-                );
+        if (this.queryParameters.name) {
+            document.getElementById(
+                `instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
+            ).click();
+        } else {
+            Array.from(
+                document.querySelectorAll(
+                    "fieldset[name='instructor'] > table > tr.filter-field > div.field-option > input[type='checkbox']"
+                )
+            ).forEach((e) => { e.click(); });
+        }
 
-                if (button) {
-                    button.innerText = (
-                        options.map((e) => e.checked).some((x) => !Boolean(x)) ? "Select All": "De-Select All"
-                    );
-                }
-            }
-        );
+        if (this.queryParameters.courseNumber) {
+            document.getElementById(
+                `course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
+            ).click();
+        } else {
+            Array.from(
+                document.querySelectorAll(
+                    "fieldset[name='courseNumber'] > table > tr.filter-field > div.field-option > input[type='checkbox']"
+                )
+            ).forEach((e) => { e.click(); });
+        }
+
+        Array.from(
+            document.querySelectorAll(
+                "fieldset[name='quarter'] > table > tr.filter-field > div.field-option > input[type='checkbox']"
+            )
+        ).forEach((e) => { e.click(); });
     }
 
     removeForm() {
@@ -332,56 +325,56 @@ class CAPEResultsFilters {
 
         const data = new Map();
         const fieldsCheckbox = [
-            "instructor",
-            "course-number",
-            "quarter"
+            "instructor", "course-number", "quarter"
         ];
         const fieldsInputRange = [
-            "year",
-            "enrollment",
-            "evaluations",
-            "recommend-class",
-            "recommend-instructor",
-            "study-hours-per-week",
-            "average-expected-grade",
-            "average-received-grade"
+            "year", "enrollment", "evaluations", "recommend-class", "recommend-instructor",
+            "study-hours-per-week", "average-expected-grade", "average-received-grade"
         ];
 
         fieldsCheckbox.forEach(
             (x) => {
-                const fieldData = new Map();
-                const elements = Array.from(
-                    document.querySelectorAll(
-                        `form#cape-results-filters > fieldset[name='${x}'] input[type='checkbox']`
-                    )
+                const elements = document.querySelectorAll(
+                    `form#cape-results-filters > fieldset[name='${x}'] input[type='checkbox']`
                 );
-                elements.forEach(
-                    (e) => { fieldData.set(e.nextSibling.innerText.trim(), e.checked); }
-                );
-                data.set(x, fieldData);
+                data.set(x, CAPEResultsFilters.dataCheckbox(elements));
             }
         );
         fieldsInputRange.forEach(
             (x) => {
-                const fieldData = new Map();
-                const fields = ["minimum", "maximum"];
-                fields.forEach(
-                    (y) => {
-                        fieldData.set(
-                            y, parseInt(
-                                document.querySelector(
-                                    `form#cape-results-filters > fieldset[name='${x}'] input#${x}-${y}[type='range']`
-                                ).value
-                            )
-                        );
-                    }
-                );
-                data.set(x, fieldData);
+                const elementMin = document.getElementById(`${x}-minimum-range`);
+                const elementMax = document.getElementById(`${x}-maximum-range`);
+                data.set(x, CAPEResultsFilters.dataInputRange(elementMin, elementMax));
             }
         );
 
-        console.log(data);
         return Object.fromEntries(data);
+    }
+
+    /**
+     * 
+     * @param {*} elements 
+     * @returns 
+     */
+    static dataCheckbox(elements) {
+        const data = new Map();
+        elements.forEach(
+            (e) => { data.set(e.nextSibling.innerText.trim(), e.checked); }
+        )
+        return data;
+    }
+
+    /**
+     * 
+     * @param {*} elementMin 
+     * @param {*} elementMax 
+     * @returns 
+     */
+    static dataInputRange(elementMin, elementMax) {
+        const data = new Map();
+        data.set("minimum", parseFloat(elementMin.value));
+        data.set("maximum", parseFloat(elementMax.value));
+        return data;
     }
 }
 
@@ -405,28 +398,6 @@ class _Fieldset {
      * 
      */
     get legend() { return this._legend(); }
-
-    /**
-     * 
-     */
-    get buttonToggle() {
-        const button = this._buttonControl();
-
-        button.classList.add("toggle-field");
-        button.addEventListener(
-            "click",
-            () => {
-                const tr = document.querySelector(
-                    `fieldset[name='${this.name}'] > table > tr.filter-field`
-                );
-                const isVisible = (!tr.style.visibility || tr.style.visibility === "visible");
-                tr.style.visibility = (isVisible ? "collapse" : "visible");
-            }
-        );
-        button.innerText = "(Hide/Show Field)";
-
-        return button;
-    }
 
     /**
      * 
@@ -455,17 +426,6 @@ class _Fieldset {
         legend.appendChild(span);
 
         return legend;
-    }
-
-    _buttonControl() {
-        const button = document.createElement("button");
-
-        button.classList.add("field-control");
-        button.setAttribute("type", "button");
-        button.setAttribute("onmouseover", "style='text-decoration: underline'");
-        button.setAttribute("onmouseout", "style='text-decoration: none'");
-
-        return button;
     }
 }
 
@@ -503,7 +463,6 @@ class _Checkbox extends _Fieldset {
     get legend() {
         const legend = this._legend()
 
-        legend.appendChild(this.buttonToggle);
         legend.appendChild(this.buttonSelectAll);
 
         return legend;
@@ -525,8 +484,6 @@ class _Checkbox extends _Fieldset {
             const input = document.createElement("input");
             input.setAttribute("type", "checkbox");
             input.setAttribute("id", id);
-            input.setAttribute("value", String(i));
-            input.click();
             div.appendChild(input);
 
             const label = document.createElement("label");
@@ -544,41 +501,41 @@ class _Checkbox extends _Fieldset {
      * 
      */
     get buttonSelectAll() {
-        const button = this._buttonControl();
+        const button = document.createElement("button");
 
         button.classList.add("field-select-all");
-        button.addEventListener(
-            "click",
-            () => {
-                const options = Array.from(
-                    document.querySelectorAll(
-                        `fieldset[name='${this.name}'] > table > tr.filter-field > div.field-option > input[type='checkbox']`
-                    )
-                );
-                const element = document.querySelector(
-                    `fieldset[name='${this.name}'] > legend > button.field-select-all`
-                );
-                if (options.map((e) => e.checked).some((x) => !Boolean(x))) {
-                    options.forEach(
-                        (e) => {
-                            if (!e.checked) { e.click() };
-                            element.innerText = "De-Select All";
-                        }
-                    );
-                } else {
-                    options.forEach(
-                        (e) => {
-                            if (e.checked) { e.click(); }
-                            element.innerText = "Select All";
-                        }
-                    );
-                }
-            }
-        );
+        button.setAttribute("type", "button");
+        button.setAttribute("onmouseover", "style='text-decoration: underline'");
+        button.setAttribute("onmouseout", "style='text-decoration: none'");
+        button.addEventListener("click", _Checkbox.selectAll);
 
         button.innerText = "Select All";
 
         return button;
+    }
+
+    static selectAll(event) {
+        const options = Array.from(
+            this.parentElement.nextSibling.querySelectorAll(
+                "tr.filter-field > div.field-option > input[type='checkbox']"
+            )
+        );
+
+        if (options.map((e) => e.checked).every((x) => Boolean(x))) {
+            options.forEach(
+                (e) => {
+                    if (e.checked) { e.click(); }
+                    this.innerText = "Select All";
+                }
+            );
+        } else {
+            options.forEach(
+                (e) => {
+                    if (!e.checked) { e.click(); };
+                    this.innerText = "De-Select All";
+                }
+            );
+        }
     }
 }
 
@@ -610,14 +567,6 @@ class _InputRange extends _Fieldset {
         fieldset.appendChild(table);
 
         return fieldset;
-    }
-
-    get legend() {
-        const legend = this._legend();
-
-        legend.append(this.buttonToggle);
-
-        return legend;
     }
 
     get inputs() {
