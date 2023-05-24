@@ -165,17 +165,17 @@ class CAPEResultsFilters {
         this.table = new CAPEResultsTable();
         
         this.formFields = [
-            this.instructor,
-            this.courseNumber,
-            this.quarter,
-            this.year,
-            this.enrollment,
-            this.evaluations,
-            this.recommendClass,
-            this.recommendInstructor,
-            this.studyHoursPerWeek,
-            this.averageExpectedGrade,
-            this.averageReceivedGrade
+            this.instructor = new _Select("instructor", this.table.instructor),
+            this.courseNumber = new _Select("course-number", this.table.courseNumber),
+            this.quarter = new _Checkbox("quarter", this.table.quarter, 1),
+            this.year = new _InputRange("year", this.table.year, 1),
+            this.enrollment = new _InputRange("enrollment", this.table.enrollment, 1),
+            this.evaluations = new _InputRange("evaluations", this.table.evaluations, 1),
+            this.recommendClass = new _InputRange("recommend-class", this.table.recommendClass, 0.1),
+            this.recommendInstructor = new _InputRange("recommend-instructor", this.table.recommendInstructor, 0.1),
+            this.studyHoursPerWeek = new _InputRange("study-hours-per-week", this.table.studyHoursPerWeek, 0.01),
+            this.averageExpectedGrade = new _InputRange("average-expected-grade", this.table.averageExpectedGrade, 0.01),
+            this.averageReceivedGrade = new _InputRange("average-received-grade", this.table.averageExpectedGrade, 0.01)
         ];
     }
 
@@ -187,7 +187,7 @@ class CAPEResultsFilters {
         form.id = form.name = "cape-results-filters";
         form.addEventListener("submit", CAPEResultsFilters.formData);
 
-        this.formFields.forEach((e) => { form.appendChild(e) });
+        this.formFields.forEach((x) => { form.appendChild(x.fieldset) });
 
         const inputSubmit = document.createElement("input");
         inputSubmit.type = "submit";
@@ -206,115 +206,27 @@ class CAPEResultsFilters {
     /**
      * 
      */
-    get instructor() {
-        const fieldset = new _Checkbox("instructor", this.table.instructor);
-        return fieldset.fieldset;
-    }
-
-    /**
-     * 
-     */
-    get courseNumber() {
-        const fieldset = new _Checkbox("course-number", this.table.courseNumber);
-        return fieldset.fieldset;
-    }
-
-    /**
-     * 
-     */
-    get quarter() {
-        const fieldset = new _Checkbox("quarter", this.table.quarter, 1);
-        return fieldset.fieldset;
-    }
-
-    get year() {
-        const fieldset = new _InputRange("year", this.table.year, 1);
-        return fieldset.fieldset;
-    }
-
-    get enrollment() {
-        const fieldset = new _InputRange("enrollment", this.table.enrollment, 1);
-        return fieldset.fieldset;
-    }
-
-    get evaluations() {
-        const fieldset = new _InputRange("evaluations", this.table.evaluations, 1);
-        return fieldset.fieldset;
-    }
-
-    get recommendClass() {
-        const fieldset = new _InputRange("recommend-class", this.table.recommendClass, 0.1);
-        return fieldset.fieldset;
-    }
-
-    get recommendInstructor() {
-        const fieldset = new _InputRange("recommend-instructor", this.table.recommendInstructor, 0.1);
-        return fieldset.fieldset;
-    }
-
-    get studyHoursPerWeek() {
-        const fieldset = new _InputRange("study-hours-per-week", this.table.studyHoursPerWeek, 0.01);
-        return fieldset.fieldset;
-    }
-
-    get averageExpectedGrade() {
-        const fieldset = new _InputRange("average-expected-grade", this.table.averageExpectedGrade, 0.01);
-        return fieldset.fieldset;
-    }
-
-    get averageReceivedGrade() {
-        const fieldset = new _InputRange("average-received-grade", this.table.averageExpectedGrade, 0.01);
-        return fieldset.fieldset;
-    }
-
-    /**
-     * 
-     */
     insertForm() {
         this.removeForm();
 
         const eTable = document.getElementById("ContentPlaceHolder1_UpdatePanel1").querySelector("div.field");
         eTable.insertAdjacentElement("afterend", this.form);
 
-        let options, button;
-
-        options = Array.from(
-            document.querySelectorAll(
-                "fieldset[name='instructor'] > div.field-option > input[type='checkbox']"
-            )
-        );
-        button = document.querySelector("fieldset[name='instructor'] > legend > button.field-select-all")
-        if (this.queryParameters.name) {
-            document.getElementById(
-                `instructor-${this.table.instructor.indexOf(this.queryParameters.name)}`
-            ).click();
-        } else {
-            options.forEach((e) => { e.click(); });
+        if (this.queryParameters.name != "") {
+            this.instructor.selectDefaults(this.queryParameters.name);
         }
-        if (options.every((e) => e.checked)) {}
-        
-
-        if (this.queryParameters.courseNumber) {
-            document.getElementById(
-                `course-number-${this.table.courseNumber.indexOf(this.queryParameters.courseNumber)}`
-            ).click();
-        } else {
-            Array.from(
-                document.querySelectorAll(
-                    "fieldset[name='courseNumber'] > div.field-option > input[type='checkbox']"
-                )
-            ).forEach((e) => { e.click(); });
-            document.querySelector(
-                "fieldset[name='courseNumber'] > legend > button.field-select-all"
-            ).innerText = "De-Select All";
+        else {
+            this.instructor.selectDefaults();
         }
 
-        options = Array.from(
-            document.querySelectorAll(
-                "fieldset[name='quarter'] > div.field-option > input[type='checkbox']"
-            )
-        );
-        options.forEach((e) => { e.click(); });
+        if (this.queryParameters.courseNumber != "") {
+            this.courseNumber.selectDefaults(this.queryParameters.courseNumber);
+        }
+        else {
+            this.courseNumber.selectDefaults();
+        }
+
+        this.quarter.selectDefaults();
     }
 
     removeForm() {
@@ -330,14 +242,19 @@ class CAPEResultsFilters {
         event.preventDefault();
 
         const data = new Map();
-        const fieldsCheckbox = [
-            "instructor", "course-number", "quarter"
-        ];
+        const fieldsSelect = ["instructor", "course-number"];
+        const fieldsCheckbox = ["quarter"];
         const fieldsInputRange = [
             "year", "enrollment", "evaluations", "recommend-class", "recommend-instructor",
             "study-hours-per-week", "average-expected-grade", "average-received-grade"
         ];
 
+        fieldsSelect.forEach(
+            (x) => {
+                const elements = document.getElementById(x).querySelectorAll("option");
+                data.set(x, CAPEResultsFilters.dataSelect(elements));
+            }
+        )
         fieldsCheckbox.forEach(
             (x) => {
                 const elements = document.querySelectorAll(
@@ -355,6 +272,19 @@ class CAPEResultsFilters {
         );
 
         return Object.fromEntries(data);
+    }
+
+    /**
+     * 
+     * @param {*} elements 
+     * @returns 
+     */
+    static dataSelect(elements) {
+        const data = new Map();
+        elements.forEach(
+            (e) => { data.set(e.value, e.checked); }
+        );
+        return data;
     }
 
     /**
@@ -425,6 +355,106 @@ class _Fieldset {
 /**
  * 
  */
+class _Select {
+    /**
+     * 
+     * @param {*} name 
+     * @param {*} values 
+     */
+    constructor(name, values) {
+        this.name = name, this.values = values;
+
+        this.fieldset = _Fieldset.fieldset(this.name);
+        this.fieldset.querySelector("legend").appendChild(this.buttonSelectAll());
+        this.fieldset.appendChild(this.options());
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    options() {
+        const select = document.createElement("select");
+        select.id = select.name = `${this.name}`;
+        select.multiple = true;
+        select.addEventListener("change", this.modifyButtonText);
+
+        this.values.forEach(
+            (x) => {
+                const option = document.createElement("option");
+                option.value = option.innerText = x;
+                select.appendChild(option);
+            }
+        );
+
+        return select;
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    buttonSelectAll() {
+        const button = document.createElement("button");
+
+        button.classList.add("field-select-all");
+        button.type = "button";
+        button.onmouseover = "style='text-decoration: underline'";
+        button.onmouseout = "style='text-decoration: none'";
+        button.setAttribute("type", "button");
+        button.addEventListener("click", _Select.selectAll);
+        button.innerText = "Select All";
+
+        return button;
+    }
+
+    /**
+     * 
+     * @param  {...any} values 
+     */
+    selectDefaults(...values) {
+        const options = Array.from(
+            this.fieldset.querySelectorAll(`select#${this.name} > option`)
+        );
+
+        if (values.length === 0) {
+            options.forEach((e) => { e.selected = true; });
+        } else {
+            values.forEach((x) => { options[values.indexOf(x)].selected = true; });
+        }
+    }
+
+    /**
+     * 
+     * @param {*} event 
+     */
+    static selectAll(event) {
+        const options = Array.from(
+            this.parentElement.parentElement.querySelectorAll("select > option")
+        );
+        if (options.every((e) => e.selected)) { options.forEach((e) => { e.selected = false; }); }
+        else { options.forEach((e) => { e.selected = true; }); }
+    }
+
+    /**
+     * 
+     * @param {*} event 
+     */
+    static modifyButtonText(event) {
+        console.log(this);
+        const options = Array.from(
+            this.parentElement.parentElement.querySelectorAll("select > option")
+        );
+        this.innerText = (
+            options.every((e) => e.selected) ? "De-Select All" : "Select All"
+        );
+    }
+}
+
+
+/**
+ * 
+ */
 class _Checkbox {
     /**
      * 
@@ -445,23 +475,25 @@ class _Checkbox {
     checkboxes() {
         const elements = [];
 
-        for (let i = 0; i < this.values.length; ++i) {
-            const div = document.createElement("div");
-            div.classList.add("field-option");
+        this.values.forEach(
+            (x) => {
+                const div = document.createElement("div");
+                div.classList.add("field-option");
 
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.addEventListener("input", _Checkbox.modifyButtonText);
+                const input = document.createElement("input");
+                input.type = "checkbox";
+                input.addEventListener("input", _Checkbox.modifyButtonText);
 
-            const label = document.createElement("label");
-            label.innerText = this.values[i];
+                const label = document.createElement("label");
+                label.innerText = input.value = x;
 
-            input.id = label.setAttribute = `${this.name}-${i}`;
+                input.id = label.setAttribute = `${this.name}-${this.values.indexOf(x)}`;
 
-            div.appendChild(input);
-            div.appendChild(label);
-            elements.push(div);
-        }
+                div.appendChild(input);
+                div.appendChild(label);
+                elements.push(div);
+            }
+        );
 
         return elements;
     }
@@ -485,6 +517,26 @@ class _Checkbox {
 
     /**
      * 
+     * @param  {...any} values 
+     */
+    selectDefaults(...values) {
+        if (values.length === 0) {
+            Array.from(
+                this.fieldset.querySelectorAll("div.field-option > input[type='checkbox']")
+            ).forEach((e) => { e.click(); });
+        } else {
+            values.forEach(
+                (x) => {
+                    this.fieldset.querySelector(
+                        `div.field-option > input[type='checkbox'][value='${x}']`
+                    ).click();
+                }
+            );
+        }
+    }
+
+    /**
+     * 
      * @param {*} event 
      */
     static selectAll(event) {
@@ -495,8 +547,6 @@ class _Checkbox {
         );
         if (options.every((e) => e.checked)) { options.forEach((e) => { e.click(); }); }
         else { options.forEach((e) => { if (!e.checked) { e.click(); }; }); }
-
-        _Checkbox.modifyButtonText(this);
     }
 
     /**
@@ -505,15 +555,10 @@ class _Checkbox {
      * @returns 
      */
     static modifyButtonText(event) {
-        const button = this.parentElement.parentElement.querySelector("legend > button.field-select-all");
         const options = Array.from(
-            this.parentElement.parentElement.querySelectorAll(
-                "div.field-option > input[type='checkbox']"
-            )
+            this.parentElement.parentElement.querySelectorAll("div.field-option > input[type='checkbox']")
         );
-        button.innerText = (
-            options.every((e) => e.checked) ? "De-Select All" : "Select All"
-        );
+        this.innerText = (options.every((e) => e.checked) ? "De-Select All" : "Select All");
     }
 }
 
