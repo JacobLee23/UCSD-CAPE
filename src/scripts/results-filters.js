@@ -36,40 +36,52 @@ class CAPEResultsTable {
     /**
      * 
      */
-    get eTable() {
-        return document.getElementById("ContentPlaceHolder1_gvCAPEs");
+    constructor() {
+        this.table = document.getElementById("ContentPlaceHolder1_gvCAPEs");
+
+        this.instructor = this._instructor();
+        this.courseNumber = this._courseNumber();
+        this.quarter = this._quarter();
+        this.year = this._year();
+        this.enrollment = this._enrollment();
+        this.evaluations = this._evaluations();
+        this.recommendClass = this._recommendClass();
+        this.recommendInstructor = this._recommendInstructor();
+        this.studyHoursPerWeek = this._studyHoursPerWeek();
+        this.averageExpectedGrade = this._averageExpectedGrade();
+        this.averageReceivedGrade = this._averageReceivedGrade();
     }
 
     /**
      * 
      */
-    get instructor() {
-        return _uniqueValues(this._scrapeTableColumn(1).map((e) => e.innerText.trim()));
+    _instructor() {
+        return _uniqueValues(this.scrapeTableColumn(1).map((e) => e.innerText.trim()));
     }
 
     /**
      * 
      */
-    get courseNumber() {
+    _courseNumber() {
         const re = /^(\w{3,4})\s(\d{1,3}\w{0,2})/;
-        return _uniqueValues(this._scrapeTableColumn(2).map((e) => re.exec(e.innerText.trim())[0]));
+        return _uniqueValues(this.scrapeTableColumn(2).map((e) => re.exec(e.innerText.trim())[0]));
     }
 
     /**
      * 
      */
-    get quarter() {
+    _quarter() {
         const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
-        return _uniqueValues(this._scrapeTableColumn(3).map((e) => re.exec(e.innerText.trim())[1]));
+        return _uniqueValues(this.scrapeTableColumn(3).map((e) => re.exec(e.innerText.trim())[1]));
     }
 
     /**
      * 
      */
-    get year() {
+    _year() {
         const re = /^(FA|WI|SP|SU|S1|S2)(\d+)$/;
         const values = _uniqueValues(
-            this._scrapeTableColumn(3).map(
+            this.scrapeTableColumn(3).map(
                 (e) => parseInt(re.exec(e.innerText.trim())[2]) + 2000
             )
         );
@@ -82,8 +94,8 @@ class CAPEResultsTable {
     /**
      * 
      */
-    get enrollment() {
-        const values = _uniqueValues(this._scrapeTableColumn(4).map((e) => parseInt(e.innerText.trim())));
+    _enrollment() {
+        const values = _uniqueValues(this.scrapeTableColumn(4).map((e) => parseInt(e.innerText.trim())));
         const step = 25;
         const max = _adjustToMultiple(Math.max(...values), step);
         return [...Array(max / step + 1).keys()].map((x) => step * x);
@@ -92,8 +104,8 @@ class CAPEResultsTable {
     /**
      * 
      */
-    get evaluations() {
-        const values = _uniqueValues(this._scrapeTableColumn(5).map((e) => parseInt(e.innerText.trim())));
+    _evaluations() {
+        const values = _uniqueValues(this.scrapeTableColumn(5).map((e) => parseInt(e.innerText.trim())));
         const step = 25;
         const max = _adjustToMultiple(Math.max(...values), step);
         return [...Array(max / step + 1).keys()].map((x) => step * x);
@@ -102,22 +114,18 @@ class CAPEResultsTable {
     /**
      * 
      */
-    get recommendClass() {
-        return [...Array(11).keys()].map((x) => 10 * x);
-    }
+    _recommendClass() { return [...Array(11).keys()].map((x) => 10 * x); }
 
     /**
      * 
      */
-    get recommendInstructor() {
-        return [...Array(11).keys()].map((x) => 10 * x);
-    }
+    _recommendInstructor() { return [...Array(11).keys()].map((x) => 10 * x); }
 
     /**
      * 
      */
-    get studyHoursPerWeek() {
-        const values = _uniqueValues(this._scrapeTableColumn(6).map((e) => parseFloat(e.innerText.trim())));
+    _studyHoursPerWeek() {
+        const values = _uniqueValues(this.scrapeTableColumn(6).map((e) => parseFloat(e.innerText.trim())));
         const step = 5;
         const max = _adjustToMultiple(Math.ceil(Math.max(...values)), step);
         return [...Array(max / step + 1).keys()].map((x) => step * x);
@@ -126,26 +134,20 @@ class CAPEResultsTable {
     /**
      * 
      */
-    get averageExpectedGrade() {
-        return [...Array(17).keys()].map((x) => 0.25 * x);
-    }
+    _averageExpectedGrade() { return [...Array(17).keys()].map((x) => 0.25 * x); }
 
     /**
      * 
      */
-    get averageReceivedGrade() {
-        return [...Array(17).keys()].map((x) => 0.25 * x);
-    }
+    _averageReceivedGrade() { return [...Array(17).keys()].map((x) => 0.25 * x); }
 
     /**
      * 
      * @param {*} ncolumn 
      * @returns 
      */
-    _scrapeTableColumn(ncolumn) {
-        return Array.from(
-            this.eTable.querySelectorAll(`tbody > tr > td:nth-child(${ncolumn})`)
-        );
+    scrapeTableColumn(ncolumn) {
+        return Array.from(this.table.querySelectorAll(`tbody > tr > td:nth-child(${ncolumn})`));
     }
 }
 
@@ -175,7 +177,7 @@ class CAPEResultsFilters {
             this.recommendInstructor = new _InputRange("recommend-instructor", this.table.recommendInstructor, 0.1),
             this.studyHoursPerWeek = new _InputRange("study-hours-per-week", this.table.studyHoursPerWeek, 0.01),
             this.averageExpectedGrade = new _InputRange("average-expected-grade", this.table.averageExpectedGrade, 0.01),
-            this.averageReceivedGrade = new _InputRange("average-received-grade", this.table.averageExpectedGrade, 0.01)
+            this.averageReceivedGrade = new _InputRange("average-received-grade", this.table.averageReceivedGrade, 0.01)
         ];
     }
 
@@ -577,53 +579,95 @@ class _InputRange {
         this.min = Math.min(...this.values), this.max = Math.max(...this.values);
         this.step = new String(step);
 
+        this.fields = ["minimum", "maximum"];
+
         this.fieldset = _Fieldset.fieldset(this.name);
         this.inputs().forEach((e) => { this.fieldset.appendChild(e); });
     }
 
+    /**
+     * 
+     * @param {*} id 
+     * @returns 
+     */
+    _datalist(id) {
+        const datalist = document.createElement("datalist");
+        datalist.id = `${id}-list`;
+        this.values.forEach(
+            (y) => {
+                const option = document.createElement("option");
+                option.value = option.label = y;
+                datalist.appendChild(option);
+            }
+        );
+
+        return datalist;
+    }
+
+    /**
+     * 
+     * @param {*} id 
+     * @param {*} field 
+     * @returns 
+     */
+    _input(id, field) {
+        const input = document.createElement("input");
+        input.id = id;
+        input.min = this.min, input.max = this.max, input.step = this.step;
+        input.value = [this.min, this.max][this.fields.indexOf(field)];
+
+        return input;
+    }
+
+    /**
+     * 
+     * @param {*} id 
+     * @param {*} field 
+     * @returns 
+     */
+    _inputNumber(id, field) {
+        const input = this._input(`${id}-number`, field);
+        input.type = "number";
+        input.addEventListener("change", _InputRange.validateInputNumber);
+
+        return input;
+    }
+
+    /**
+     * 
+     * @param {*} id 
+     * @param {*} field 
+     * @returns 
+     */
+    _inputRange(id, field) {
+        const input = this._input(`${id}-range`, field);
+        input.type = "range";
+        input.setAttribute("list", `${id}-list`);
+        input.addEventListener("input", _InputRange.validateInputRange);
+
+        return input;
+    }
+
+    /**
+     * 
+     * @returns 
+     */
     inputs() {
         const elements = []
 
-        const fields = ["minimum", "maximum"];
-        fields.forEach(
+        this.fields.forEach(
             (x) => {
-                const id = `${this.name}-${x}`;
-
                 const div = document.createElement("div");
+                div.id = `${this.name}-${x}`;
                 div.classList.add("field-range");
 
                 const label = document.createElement("label");
                 label.innerText = x[0].toUpperCase().concat(x.slice(1).toLowerCase());
 
-                const inputNumber = document.createElement("input");
-                inputNumber.type = "number";
-                inputNumber.id = `${id}-number`;
-                inputNumber.addEventListener("change", _InputRange.validateInputNumber);
-
-                const inputRange = document.createElement("input");
-                inputRange.type = "range";
-                inputRange.id = `${id}-range`;
-                inputRange.addEventListener("input", _InputRange.validateInputRange);
-
-                inputNumber.min = inputRange.min = this.min;
-                inputNumber.max = inputRange.max = this.max;
-                inputNumber.step = inputRange.step = this.step;
-                inputNumber.value = inputRange.value = [this.min, this.max][fields.indexOf(x)];
-
-                const datalist = document.createElement("datalist");
-                inputRange.setAttribute("list", datalist.id = `${id}-list`);
-                this.values.forEach(
-                    (y) => {
-                        const option = document.createElement("option");
-                        option.value = option.label = y;
-                        datalist.appendChild(option);
-                    }
-                );
-
                 div.appendChild(label);
-                div.appendChild(inputNumber);
-                div.appendChild(inputRange);
-                div.appendChild(datalist);
+                div.appendChild(this._inputNumber(div.id, x));
+                div.appendChild(this._inputRange(div.id, x));
+                div.appendChild(this._datalist(div.id));
                 elements.push(div);
             }
         );
@@ -637,11 +681,15 @@ class _InputRange {
      */
     static validateInputNumber(event) {
         let other;
-        if (this.parentElement.nextSibling) {
-            other = this.parentElement.nextSibling.querySelector("input[type='number']");
+        if (this.id.includes("minimum")) {
+            other = document.getElementById(
+                `${this.parentElement.parentElement.name}-maximum-number`
+            );
             if (this.value > other.value) { this.value = other.value; }
-        } else if (this.parentElement.previousSibling) {
-            other = this.parentElement.previousSibling.querySelector("input[type='number']");
+        } else if (this.id.includes("maximum")) {
+            other = document.getElementById(
+                `${this.parentElement.parentElement.name}-minimum-number`
+            );
             if (this.value < other.value) { this.value = other.value; }
         } else {
             throw new Error();
@@ -656,11 +704,15 @@ class _InputRange {
      */
     static validateInputRange(event) {
         let other;
-        if (this.parentElement.nextSibling) {
-            other = this.parentElement.nextSibling.querySelector("input[type='range']");
+        if (this.id.includes("minimum")) {
+            other = document.getElementById(
+                `${this.parentElement.parentElement.name}-maximum-range`
+            );
             if (this.value > other.value) { this.value = other.value; }
-        } else if (this.parentElement.previousSibling) {
-            other = this.parentElement.previousSibling.querySelector("input[type='range']");
+        } else if (this.id.includes("maximum")) {
+            other = document.getElementById(
+                `${this.parentElement.parentElement.name}-minimum-range`
+            );
             if (this.value < other.value) { this.value = other.value; }
         } else {
             throw new Error();
